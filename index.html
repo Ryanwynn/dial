@@ -1,0 +1,1242 @@
+<title>Dial</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Dial in espresso on a Baratza Encore ESP and Breville Bambino.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: gear stands on a countertop behind the page; frosted control cards float over it,
+   grinder controls on the left, machine controls on the right, a sticky readout below. */
+:root{
+  --bg:#F5F2ED;
+  --ink:#1A1A1A;
+  --ink-2:#57524B;
+  --ink-3:#8A847B;
+  --accent:#9C5F3A;
+  --accent-soft:rgba(156,95,58,.15);
+  --accent-glow:rgba(156,95,58,.38);
+  --line:rgba(26,26,26,.13);
+  --line-2:rgba(26,26,26,.07);
+  --surface:#ECE7DF;
+  --counter:#E7E0D6;
+  --glass:rgba(248,246,242,.62);
+  --glass-hi:rgba(250,248,245,.9);
+  --on-ink:#F5F2ED;
+  --font:'Inter',ui-sans-serif,system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+  --spring:cubic-bezier(.22,1.35,.36,1);
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --r:12px;
+  --nav-h:64px;
+  --tab-h:62px;
+  --gutter-l:max(16px,env(safe-area-inset-left,0px));
+  --gutter-r:max(16px,env(safe-area-inset-right,0px));
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .06 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:'cv11','ss01'}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lab{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- top bar & navigation ---------- */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;height:var(--nav-h);display:flex;align-items:center;padding-left:var(--gutter-l);padding-right:var(--gutter-r);background:rgba(245,242,237,.82);border-bottom:1px solid var(--line-2)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.brand-mark{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);position:relative}
+.brand-mark::after{content:"";position:absolute;left:50%;top:2px;width:1.5px;height:7px;background:var(--accent);transform:translateX(-50%);border-radius:1px}
+.brand small{font-weight:400;color:var(--ink-3);font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}
+.tabs{display:flex;gap:4px}
+.tab{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink-2);transition:background .3s var(--ease),color .3s,transform .35s var(--spring)}
+.tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5}
+.tab[aria-current="page"]{background:var(--ink);color:var(--on-ink)}
+.tab:active{transform:scale(.95)}
+@media (min-width:1024px){
+  .tabs{position:fixed;top:calc(env(safe-area-inset-top,0px) + 13px);right:var(--gutter-r);z-index:31}
+  .topbar{padding-left:max(32px,env(safe-area-inset-left,0px))}
+}
+@media (max-width:1023.98px){
+  :root{--nav-h:54px}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:31;height:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));padding:6px var(--gutter-r) env(safe-area-inset-bottom,0px) var(--gutter-l);background:rgba(245,242,237,.9);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--line);justify-content:space-around}
+  .tab{flex-direction:column;gap:3px;font-size:11px;letter-spacing:.06em;padding:6px 10px;border-radius:12px;flex:1;max-width:96px}
+  .tab[aria-current="page"]{background:transparent;color:var(--ink)}
+  .tab[aria-current="page"] svg{stroke-width:2}
+  .tab:not([aria-current="page"]){color:var(--ink-3)}
+}
+
+/* ---------- gear backdrop ---------- */
+.gear-layer{pointer-events:none;overflow:hidden}
+.counter{position:absolute;left:0;right:0;bottom:0;background:var(--counter);border-top:1px solid var(--line)}
+.counter::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.35;mix-blend-mode:multiply}
+.gear{position:absolute;margin:0;display:flex;flex-direction:column;align-items:center}
+.gear-art{width:100%;flex:1;min-height:0;position:relative}
+.gear-art svg,.gear-art img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gear-art img{object-fit:contain;object-position:50% 100%;mix-blend-mode:multiply;image-rendering:auto}
+.spec{position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.spec::before{content:"";display:inline-block;width:14px;height:1px;background:var(--ink-3);vertical-align:middle;margin-right:8px}
+.wash{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 38%,transparent 52%,rgba(110,74,44,.13) 100%);}
+.wash::after{content:"";position:absolute;inset:0;background:rgba(245,238,228,.10)}
+.stream{opacity:0;stroke-dasharray:6 6;transition:opacity .3s}
+.pouring .stream{opacity:1;animation:pour .5s linear infinite}
+@keyframes pour{to{stroke-dashoffset:-12}}
+.links{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.link-path{fill:none;stroke:var(--accent);stroke-width:1.25;opacity:.7;transition:opacity .3s,stroke-width .3s}
+.link-path.on{opacity:1;stroke-width:2}
+.link-glow{fill:var(--accent-glow);transform-box:fill-box;transform-origin:center;animation:glow 2.6s ease-in-out infinite}
+.link-glow.on{animation-duration:1.3s}
+.link-dot{fill:var(--accent);stroke:var(--bg);stroke-width:1.5}
+@keyframes glow{0%,100%{transform:scale(.6);opacity:.65}50%{transform:scale(1.15);opacity:.2}}
+
+@media (min-width:1024px){
+  .gear-layer{position:fixed;left:0;right:0;top:calc(var(--nav-h) + env(safe-area-inset-top,0px));bottom:0;z-index:0}
+  .counter{height:13vh}
+  .gear{bottom:13vh;height:min(74vh,700px);transform:translateX(-50%)}
+  /* centred on the gaps between the card columns so the gear reads between the panels */
+  .gear-grinder{left:calc(50% - min(19vw,270px));aspect-ratio:300/560}
+  .gear-machine{left:calc(50% + min(18vw,262px));aspect-ratio:430/560}
+  .spec{left:50%;transform:translateX(-50%)}
+}
+@media (max-width:1023.98px){
+  .gear-layer{position:relative;height:clamp(280px,50vh,440px);will-change:transform,opacity}
+  .counter{height:16%}
+  .gear{bottom:16%;height:74%}
+  .gear-grinder{left:8%;aspect-ratio:300/560}
+  .gear-machine{right:3%;aspect-ratio:430/560}
+  .spec{top:auto;bottom:-22px;font-size:9px;letter-spacing:.16em}
+  .gear-grinder .spec{left:0;transform:none}
+  .gear-machine .spec{left:auto;right:0;transform:none}
+  .links{display:none}
+}
+
+/* ---------- brew layout ---------- */
+.view-brew{position:relative}
+.brew-head{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;max-width:1440px;margin:0 auto;padding:28px var(--gutter-r) 4px var(--gutter-l)}
+.brew-head h1{margin:0;font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.brew-head p{margin:2px 0 0;color:var(--ink-2);font-size:14px}
+.brew-grid{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:16px var(--gutter-r) 24px var(--gutter-l)}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (min-width:1024px){
+  .brew-head{padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}
+  .brew-grid{display:grid;grid-template-columns:minmax(290px,330px) minmax(290px,350px) minmax(290px,330px);justify-content:space-between;gap:20px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}
+  .col-center{padding-top:56px}
+  .brew-head .lead-hint{display:none}
+}
+@media (max-width:1023.98px){
+  .brew-head{margin-top:-8px;padding-top:36px}
+  .brew-grid{display:flex;flex-direction:column;gap:14px}
+  .col{display:contents}
+  #card-basket{order:1}#card-dose{order:2}#card-coffee{order:3}#card-grind{order:4}#card-ret{order:5}#card-time{order:6}#card-yield{order:7}
+  .view-brew{padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 150px)}
+}
+
+/* ---------- cards ---------- */
+.glass{position:relative;background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.15);backdrop-filter:blur(20px) saturate(1.15);border:1px solid rgba(26,26,26,.09);border-radius:var(--r);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 18px 40px -28px rgba(40,28,18,.35)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;background-image:var(--grain);opacity:.28;mix-blend-mode:multiply;pointer-events:none}
+.card{padding:18px 18px 20px;transition:border-color .3s,box-shadow .3s}
+.card.is-hot{border-color:rgba(156,95,58,.35)}
+.card>*{position:relative}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.big{display:flex;align-items:baseline;gap:6px;font-weight:300;font-size:clamp(42px,5vw,54px);line-height:1;letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin:6px 0 14px}
+.big .unit{font-size:16px;font-weight:400;letter-spacing:0;color:var(--ink-2)}
+.big.word{font-size:clamp(34px,4vw,42px)}
+.sub{font-size:13px;color:var(--ink-2)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.hair{height:1px;background:var(--line-2);margin:14px 0;border:0}
+
+/* rolling numerals */
+.roll{display:inline-flex;line-height:1}
+.rd{display:inline-block;height:1em;overflow:hidden;line-height:1em}
+.rs{display:flex;flex-direction:column;transition:transform .7s var(--spring)}
+.rs>span{height:1em;line-height:1em;display:block;text-align:center}
+.roll.live .rs{transition:none}
+.rc{display:inline-block}
+
+/* segmented */
+.seg{position:relative;display:flex;padding:3px;border-radius:10px;background:rgba(26,26,26,.06);border:1px solid var(--line-2)}
+.seg-thumb{position:absolute;top:3px;bottom:3px;left:0;border-radius:8px;background:var(--glass-hi);box-shadow:0 1px 2px rgba(26,26,26,.12),0 0 0 1px rgba(26,26,26,.05);transition:transform .5s var(--spring),width .5s var(--spring)}
+.seg button{position:relative;flex:1;border:0;background:transparent;padding:9px 8px;font-size:13px;font-weight:500;color:var(--ink-2);border-radius:8px;white-space:nowrap;transition:color .25s,transform .35s var(--spring)}
+.seg button[aria-checked="true"]{color:var(--ink)}
+.seg button:active{transform:scale(.96)}
+.seg.dark{background:rgba(26,26,26,.08)}
+.seg.dark .seg-thumb{background:var(--ink)}
+.seg.dark button[aria-checked="true"]{color:var(--on-ink)}
+.seg.small button{padding:6px 10px;font-size:12px}
+.stack{display:flex;flex-direction:column;gap:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:transparent;font-size:14px;font-weight:500;transition:transform .35s var(--spring),background .25s,border-color .25s}
+.btn:hover{border-color:rgba(26,26,26,.28)}
+.btn:active{transform:scale(.96)}
+.btn.primary{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.btn.primary:hover{background:#2a2928}
+.btn.ghost{border-color:transparent;padding:0 10px}
+.btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn.round{width:42px;padding:0;border-radius:50%}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:500;color:var(--ink-2);transition:all .3s var(--ease),transform .35s var(--spring)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.chip:active{transform:scale(.95)}
+.switch{display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;padding:4px 0;font-size:13px;color:var(--ink-2);text-align:left}
+.switch .knob{width:36px;height:22px;border-radius:999px;background:rgba(26,26,26,.14);position:relative;flex:none;transition:background .3s}
+.switch .knob::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .45s var(--spring)}
+.switch[aria-checked="true"] .knob{background:var(--ink)}
+.switch[aria-checked="true"] .knob::after{transform:translateX(14px)}
+
+/* ruler */
+.ruler{position:relative;height:72px;touch-action:pan-y;cursor:grab;border-radius:10px;user-select:none;-webkit-user-select:none;margin:0 -6px}
+.ruler.active{cursor:grabbing}
+.ruler canvas{display:block}
+.ruler::after{content:"";position:absolute;left:50%;top:0;width:2px;height:34px;margin-left:-1px;border-radius:1px;background:var(--accent)}
+.ruler::before{content:"";position:absolute;left:50%;top:-5px;margin-left:-4px;border:4px solid transparent;border-top-color:var(--accent)}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* range */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(var(--ink),var(--ink)) 0/var(--p,50%) 100% no-repeat,rgba(26,26,26,.15);border-radius:2px}
+input[type=range]::-moz-range-track{height:2px;background:rgba(26,26,26,.15)}
+input[type=range]::-moz-range-progress{height:2px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-10px;border-radius:50%;background:var(--ink);border:3px solid var(--bg);box-shadow:0 0 0 1px rgba(26,26,26,.25),0 2px 6px rgba(0,0,0,.18);transition:transform .35s var(--spring)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ink);border:3px solid var(--bg);box-shadow:0 0 0 1px rgba(26,26,26,.25)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.scale-marks{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-top:2px}
+
+/* dial */
+.dial-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.dial{position:relative;width:min(100%,270px);aspect-ratio:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;border-radius:50%}
+.dial.active{cursor:grabbing}
+.dial svg{width:100%;height:100%;display:block;overflow:visible}
+.dial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.dial-center .big{margin:0;font-size:58px}
+.dial-zone{margin-top:6px;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.dial-zone.filter{color:var(--ink-3)}
+.dial-legend{display:flex;gap:16px;font-size:11px;color:var(--ink-2)}
+.dial-legend span{display:inline-flex;align-items:center;gap:6px}
+.dial-legend i{width:14px;height:2px;border-radius:1px;background:var(--ink)}
+.dial-legend i.f{background:var(--ink-3);opacity:.6}
+
+/* timer */
+.timer{position:relative;width:min(100%,240px);aspect-ratio:1;margin:0 auto}
+.timer svg{width:100%;height:100%;display:block}
+.t-track{fill:none;stroke:rgba(26,26,26,.1);stroke-width:2}
+.t-band{fill:none;stroke:var(--accent-soft);stroke-width:14}
+.t-pi{fill:none;stroke:var(--ink-3);stroke-width:2;stroke-dasharray:2 4;opacity:.8}
+.t-prog{fill:none;stroke:var(--ink);stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .8s var(--spring)}
+.timer.running .t-prog{transition:none}
+.t-tick{stroke:rgba(26,26,26,.28);stroke-width:1}
+.t-lbl{font-size:8px;fill:var(--ink-3);font-family:var(--font);text-anchor:middle;dominant-baseline:middle}
+.timer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.timer-center .big{margin:0;font-size:52px}
+.phase{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-top:6px;min-height:14px}
+.timer.running .phase{color:var(--accent)}
+.picker{position:relative;height:132px;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;border-radius:10px;mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.picker::-webkit-scrollbar{display:none}
+.picker-band{position:absolute;left:0;right:0;top:50%;height:44px;margin-top:-22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);pointer-events:none}
+.pk{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:24px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--ink-3);transition:color .2s,transform .3s var(--spring)}
+.pk.on{color:var(--ink);transform:scale(1.15)}
+.pk.band{color:var(--accent)}
+.pk-pad{height:44px}
+.picker-wrap{position:relative;margin:4px 0}
+
+/* coffee carousel */
+.carousel{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 6px;margin:0 -2px;scrollbar-width:none}
+.carousel::-webkit-scrollbar{display:none}
+.bean-chip{flex:none;scroll-snap-align:start;width:168px;text-align:left;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.35);padding:12px;display:flex;flex-direction:column;gap:3px;transition:border-color .3s,background .3s,transform .35s var(--spring)}
+.bean-chip:active{transform:scale(.97)}
+.bean-chip[aria-pressed="true"]{border-color:var(--ink);background:var(--glass-hi);box-shadow:0 0 0 1px var(--ink)}
+.bean-chip b{font-weight:600;font-size:14px;line-height:1.25}
+.bean-chip span{font-size:12px;color:var(--ink-2)}
+.bean-chip .d{margin-top:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.bean-chip.add{align-items:center;justify-content:center;color:var(--ink-2);border-style:dashed;width:110px;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(156,95,58,.35);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.pill-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink-2)}
+
+/* summary */
+.summary-dock{z-index:5;pointer-events:none}
+.summary{pointer-events:auto;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;padding:14px 16px 14px 22px;background:rgba(248,246,242,.84)}
+.stats{display:flex;gap:22px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .v{font-size:30px;font-weight:300;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:3px}
+.stat .v small{font-size:12px;color:var(--ink-2);letter-spacing:0}
+.gauge-box{min-width:0}
+.gauge{position:relative;height:22px;margin:2px 0 4px}
+.gauge-track{position:absolute;left:0;right:0;top:10px;height:2px;background:rgba(26,26,26,.12);border-radius:2px}
+.gauge-zone{position:absolute;top:6px;height:10px;left:38%;width:24%;background:var(--accent-soft);border-radius:5px}
+.gauge-ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(26,26,26,.18) 0 1px,transparent 1px 10%);top:14px;height:5px}
+.needle{position:absolute;top:0;width:2px;height:22px;margin-left:-1px;background:var(--ink);border-radius:1px;transition:left .8s var(--spring)}
+.needle::after{content:"";position:absolute;left:-4px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--bg)}
+.gauge-lbl{display:flex;justify-content:space-between;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.gauge-lbl .on{color:var(--ink)}
+.hint{margin:6px 0 0;font-size:13.5px;color:var(--ink);line-height:1.35}
+.pnote{margin:4px 0 0;font-size:12px;color:var(--accent)}
+@media (min-width:1024px){
+  .summary-dock{position:sticky;bottom:16px;max-width:1040px;margin:8px auto 24px;padding:0 24px}
+}
+@media (max-width:1023.98px){
+  .summary-dock{position:fixed;left:0;right:0;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 8px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+  .summary{grid-template-columns:1fr auto;grid-template-areas:"stats btn" "gauge gauge";gap:10px 14px;padding:12px 14px}
+  .stats{grid-area:stats;gap:18px}
+  .stat .v{font-size:24px}
+  .gauge-box{grid-area:gauge}
+  #btn-taste{grid-area:btn}
+  .hint{font-size:12.5px}
+  .stat.hide-sm{display:none}
+}
+
+/* ---------- pages ---------- */
+.page{max-width:1080px;margin:0 auto;padding:32px var(--gutter-r) 48px var(--gutter-l)}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.page-h h1{margin:0;font-size:clamp(30px,4vw,40px);font-weight:300;letter-spacing:-.03em;line-height:1.1;text-wrap:balance}
+.page-h p{margin:6px 0 0;color:var(--ink-2);max-width:60ch}
+@media (max-width:1023.98px){.page{padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 32px)}}
+.panel{background:rgba(255,255,255,.4);border:1px solid var(--line-2);border-radius:var(--r);padding:20px;position:relative}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;background-image:var(--grain);opacity:.2;mix-blend-mode:multiply;pointer-events:none}
+.panel>*{position:relative}
+
+.lgroup{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;margin-bottom:20px}
+@media (max-width:860px){.lgroup{grid-template-columns:1fr}}
+.lg-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:4px}
+.lg-h h2{margin:0;font-size:20px;font-weight:500;letter-spacing:-.01em}
+.shots{list-style:none;margin:14px 0 0;padding:0}
+.shot{display:flex;align-items:stretch;border-top:1px solid var(--line-2)}
+.shot-main{flex:1;min-width:0;display:grid;grid-template-columns:96px 1fr auto;gap:4px 16px;align-items:center;text-align:left;border:0;background:transparent;padding:14px 4px;border-radius:8px;transition:background .25s,transform .35s var(--spring)}
+.shot-main:hover{background:rgba(26,26,26,.03)}
+.shot-main:active{transform:scale(.99)}
+.shot-when{font-size:12px;color:var(--ink-2);line-height:1.3}
+.shot-when b{display:block;color:var(--ink);font-weight:500;font-size:13px}
+.shot-nums{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;font-variant-numeric:tabular-nums;min-width:0}
+.shot-nums .k{color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-right:4px}
+.shot-basket{grid-column:2;font-size:12px;color:var(--ink-2)}
+.stars{display:inline-flex;gap:3px}
+.stars i{width:7px;height:7px;border-radius:50%;border:1px solid var(--ink);display:block}
+.stars i.f{background:var(--ink)}
+.dial-btn{flex:none;align-self:center;margin-left:8px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);transition:all .3s var(--ease)}
+.dial-btn[aria-pressed="true"]{color:var(--accent);border-color:rgba(156,95,58,.45);background:var(--accent-soft)}
+.shot-nums>span{white-space:nowrap}
+@media (max-width:560px){
+  .shot{flex-wrap:wrap;padding-bottom:12px}
+  .shot-main{grid-template-columns:1fr auto;padding-bottom:8px}
+  .shot-when{grid-column:1/-1}
+  .shot-nums{gap:2px 14px}
+  .shot-basket{grid-column:1/-1}
+  .dial-btn{margin-left:4px}
+}
+.chart svg{width:100%;height:auto;display:block}
+.chart .ax{font-size:9px;fill:var(--ink-3);font-family:var(--font)}
+.chart .gl{stroke:var(--line-2)}
+.chart .pt{fill:var(--ink)}
+.chart .pt.best{fill:var(--accent)}
+.chart .ring{fill:none;stroke:var(--accent);stroke-width:1.5}
+.chart .trend{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 3}
+
+.beans-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.bean-card h2{margin:0 0 2px;font-size:19px;font-weight:500;letter-spacing:-.01em}
+.bean-card .roaster{color:var(--ink-2);font-size:14px}
+.bean-days{font-size:44px;font-weight:300;letter-spacing:-.03em;line-height:1;margin:18px 0 4px;font-variant-numeric:tabular-nums}
+.bean-days small{font-size:13px;color:var(--ink-2);letter-spacing:0;margin-left:6px}
+.recipe{font-size:13px;color:var(--ink-2);margin-top:12px;padding-top:12px;border-top:1px solid var(--line-2)}
+.recipe b{color:var(--ink);font-weight:500}
+.card-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+.prefs{display:grid;gap:16px}
+.prefs fieldset{border:1px solid var(--line-2);border-radius:var(--r);padding:20px;margin:0;background:rgba(255,255,255,.4);min-width:0}
+.prefs legend{padding:0 6px;margin-left:-6px}
+.prefs .desc{font-size:13px;color:var(--ink-2);margin:2px 0 14px;max-width:62ch}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-2);font-weight:500}
+.field input,.field select,.field textarea,.input{height:42px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.65);padding:0 12px;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums;width:100%;min-width:0}
+.field textarea{height:auto;min-height:84px;padding:10px 12px;resize:vertical;line-height:1.4}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(26,26,26,.08)}
+.btable{width:100%;border-collapse:collapse;font-size:14px}
+.btable th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);padding:6px 8px 6px 0}
+.btable td{padding:6px 8px 6px 0;border-top:1px solid var(--line-2)}
+.btable input{height:36px;width:74px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.65);padding:0 8px;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto}
+.photo-row{display:grid;grid-template-columns:88px 1fr;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line-2)}
+.photo-row:first-of-type{border-top:0}
+.thumb{width:88px;height:88px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);overflow:hidden;position:relative}
+.thumb img,.thumb svg{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg{position:absolute;inset:0;background:rgba(26,22,18,.32);opacity:0;transition:opacity .3s}
+.sheet{position:relative;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;background:var(--bg);border-radius:18px 18px 0 0;padding:24px var(--gutter-r) calc(24px + env(safe-area-inset-bottom,0px)) var(--gutter-l);transform:translateY(40px);opacity:0;transition:transform .55s var(--spring),opacity .3s;box-shadow:0 -10px 40px rgba(26,22,18,.15)}
+.sheet::before{content:"";position:absolute;inset:0;border-radius:inherit;background-image:var(--grain);opacity:.18;mix-blend-mode:multiply;pointer-events:none}
+.sheet>*{position:relative}
+.sheet-wrap.open .sheet-bg{opacity:1}
+.sheet-wrap.open .sheet{transform:none;opacity:1}
+@media (min-width:700px){.sheet-wrap{align-items:center}.sheet{border-radius:16px;padding:28px}}
+.sheet h2{margin:0 0 4px;font-size:24px;font-weight:400;letter-spacing:-.02em}
+.sheet .lede{margin:0 0 20px;color:var(--ink-2);font-size:14px}
+.sheet form{display:flex;flex-direction:column;gap:16px}
+.sheet footer{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.sheet footer .spacer{flex:1}
+.taste-row{display:grid;grid-template-columns:96px 1fr 28px;align-items:center;gap:12px}
+.taste-row output{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.taste-ends{grid-column:2;display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);margin-top:-10px;letter-spacing:.06em;text-transform:uppercase}
+.rate{display:flex;gap:8px}
+.rate button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:transparent;font-size:16px;font-weight:500;font-variant-numeric:tabular-nums;transition:all .3s var(--ease),transform .35s var(--spring)}
+.rate button[aria-checked="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.rate button:active{transform:scale(.92)}
+.shot-recap{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;font-variant-numeric:tabular-nums;padding:12px 0;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);margin-bottom:4px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:60;transform:translate(-50%,20px);opacity:0;background:var(--ink);color:var(--on-ink);padding:10px 16px;border-radius:999px;font-size:13px;transition:transform .5s var(--spring),opacity .25s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.show{transform:translate(-50%,0);opacity:1}
+@media (max-width:1023.98px){.toast{bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 150px)}}
+.empty{color:var(--ink-2);padding:24px 0}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation:none!important}
+}
+</style>
+
+<header class="topbar">
+  <a class="brand" href="#brew" data-nav="brew"><span class="brand-mark" aria-hidden="true"></span>Dial<small>Espresso</small></a>
+</header>
+<nav class="tabs" aria-label="Sections">
+  <button class="tab" type="button" data-nav="brew"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c0 1.5 1.5 1.5 1.5 3M12 3.5c0 1.5 1.5 1.5 1.5 3"/></svg><span>Brew</span></button>
+  <button class="tab" type="button" data-nav="log"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/></svg><span>Log</span></button>
+  <button class="tab" type="button" data-nav="beans"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="6.5" ry="8.5" transform="rotate(35 12 12)"/><path d="M8.5 17.5c3-2 2.5-5.5 1.5-7.5s-.5-4.5 3.5-6"/></svg><span>Beans</span></button>
+  <button class="tab" type="button" data-nav="prefs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
+</nav>
+
+<main>
+<!-- ================= BREW ================= -->
+<section class="view view-brew" id="view-brew" aria-label="Brew">
+  <div class="gear-layer" id="gear-layer" aria-hidden="true">
+    <div class="counter"></div>
+    <figure class="gear gear-grinder"><div class="gear-art" id="art-grinder"></div><figcaption class="spec">Baratza Encore ESP</figcaption></figure>
+    <figure class="gear gear-machine"><div class="gear-art" id="art-machine"></div><figcaption class="spec">Breville Bambino</figcaption></figure>
+    <div class="wash"></div>
+  </div>
+  <svg class="links" id="links" aria-hidden="true"></svg>
+
+  <div class="brew-head">
+    <div>
+      <h1>Shot builder</h1>
+      <p id="brew-sub">Set up the shot, pull it, then taste and log.</p>
+    </div>
+  </div>
+
+  <div class="brew-grid" id="brew-grid">
+    <div class="col col-grinder">
+      <article class="card glass" id="card-grind" data-link="grinder-dial" aria-labelledby="l-grind">
+        <div class="card-h"><span class="lab" id="l-grind">Grind size</span><span class="tag">Grind ring</span></div>
+        <div class="dial-wrap">
+          <div class="dial" id="dial"></div>
+          <div class="dial-legend"><span><i></i>Espresso range</span><span><i class="f"></i>Filter range</span></div>
+          <div class="row">
+            <button class="btn sm" type="button" id="g-minus" aria-label="Grind finer">− Finer</button>
+            <button class="btn sm ghost" type="button" id="g-reset">Default</button>
+            <button class="btn sm" type="button" id="g-plus" aria-label="Grind coarser">Coarser +</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card glass" id="card-ret" data-link="grinder-bin" aria-labelledby="l-ret">
+        <div class="card-h"><span class="lab" id="l-ret">Retention</span><span class="tag">Chute &amp; bin</span></div>
+        <div class="big"><span class="roll" id="v-ret" aria-hidden="true"></span><span class="unit">%</span></div>
+        <input type="range" id="ret" min="0" max="3" step="0.1" aria-labelledby="l-ret">
+        <div class="scale-marks"><span>0%</span><span>1%</span><span>2%</span><span>3%</span></div>
+        <hr class="hair">
+        <div class="row between"><span class="sub">Effective dose</span><span class="num" id="eff" style="font-size:18px;font-weight:500"></span></div>
+      </article>
+    </div>
+
+    <div class="col col-center">
+      <article class="card glass" id="card-basket" aria-labelledby="l-basket">
+        <div class="card-h"><span class="lab" id="l-basket">Basket</span><span class="tag">54 mm</span></div>
+        <div class="big word" id="v-basket"></div>
+        <div class="stack">
+          <div id="seg-size"></div>
+          <div id="seg-wall"></div>
+        </div>
+        <p class="sub" id="basket-range" style="margin:12px 0 0"></p>
+      </article>
+
+      <article class="card glass" id="card-coffee" aria-labelledby="l-coffee">
+        <div class="card-h"><span class="lab" id="l-coffee">Coffee</span><button class="btn sm ghost" type="button" id="bean-edit">Edit bean</button></div>
+        <div class="carousel" id="bean-car" role="group" aria-label="Saved beans"></div>
+        <hr class="hair">
+        <div id="bean-meta"></div>
+      </article>
+    </div>
+
+    <div class="col col-machine">
+      <article class="card glass" id="card-dose" data-link="machine-pf" aria-labelledby="l-dose">
+        <div class="card-h"><span class="lab" id="l-dose">Dose · coffee in</span><span class="tag">Portafilter</span></div>
+        <div class="big"><span class="roll" id="v-dose" aria-hidden="true"></span><span class="unit">g</span></div>
+        <div class="ruler" id="ruler-dose"></div>
+        <p class="sub" style="margin:8px 0 0">Shaded zone is the basket's recommended range.</p>
+      </article>
+
+      <article class="card glass" id="card-time" data-link="machine-group" aria-labelledby="l-time">
+        <div class="card-h"><span class="lab" id="l-time">Brew time</span><span class="tag">Group head</span></div>
+        <div id="seg-tmode" style="margin:8px 0 14px"></div>
+        <div id="time-timer">
+          <div class="timer" id="timer"></div>
+          <div class="row" style="justify-content:center;margin-top:12px">
+            <button class="btn primary" type="button" id="t-start" style="min-width:120px">Start</button>
+            <button class="btn" type="button" id="t-reset">Reset</button>
+          </div>
+        </div>
+        <div id="time-manual" hidden>
+          <div class="big" style="justify-content:center"><span class="roll" id="v-time" aria-hidden="true"></span><span class="unit">s</span></div>
+          <div class="picker-wrap"><div class="picker" id="picker" tabindex="0" role="slider" aria-labelledby="l-time"></div><div class="picker-band"></div></div>
+        </div>
+        <hr class="hair">
+        <button class="switch" type="button" role="switch" id="pi" aria-checked="true"><span class="knob"></span><span>Pre-infusion<br><span style="font-size:12px;color:var(--ink-3)">The Bambino starts every shot with low-pressure pre-infusion.</span></span></button>
+      </article>
+
+      <article class="card glass" id="card-yield" data-link="machine-cup" aria-labelledby="l-yield">
+        <div class="card-h"><span class="lab" id="l-yield">Yield · beverage out</span><span class="tag">Cup</span></div>
+        <div class="row between">
+          <div class="big"><span class="roll" id="v-yield" aria-hidden="true"></span><span class="unit" id="u-yield">g</span></div>
+          <div id="seg-unit"></div>
+        </div>
+        <div class="ruler" id="ruler-yield"></div>
+        <div class="presets">
+          <button class="btn sm" type="button" id="p1"></button>
+          <button class="btn sm" type="button" id="p2"></button>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <div class="summary-dock">
+    <div class="summary glass" id="summary" role="region" aria-label="Shot summary">
+      <div class="stats">
+        <div class="stat"><span class="lab">Ratio</span><span class="v"><small>1:</small><span class="roll" id="s-ratio" aria-hidden="true"></span></span></div>
+        <div class="stat"><span class="lab">Flow</span><span class="v"><span class="roll" id="s-flow" aria-hidden="true"></span><small>g/s</small></span></div>
+        <div class="stat hide-sm"><span class="lab">In → out</span><span class="v"><span class="roll" id="s-io" aria-hidden="true"></span><small>g</small></span></div>
+      </div>
+      <div class="gauge-box">
+        <div class="gauge" aria-hidden="true"><div class="gauge-track"></div><div class="gauge-zone"></div><div class="needle" id="needle"></div></div>
+        <div class="gauge-lbl" aria-hidden="true"><span id="gl-sour">Sour</span><span id="gl-bal">Balanced</span><span id="gl-bit">Bitter</span></div>
+        <p class="hint" id="hint" aria-live="polite"></p>
+        <p class="pnote" id="pnote" hidden>Pressurized basket: grind changes have less effect here. Switch to the non-pressurized basket to really dial in.</p>
+      </div>
+      <button class="btn primary" type="button" id="btn-taste">Taste &amp; log</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LOG ================= -->
+<section class="view" id="view-log" aria-label="Shot log" hidden>
+  <div class="page">
+    <div class="page-h"><div><h1>Shot log</h1><p>Every shot, grouped by bean. Tap a shot to load its settings into the builder.</p></div></div>
+    <div id="log-body"></div>
+  </div>
+</section>
+
+<!-- ================= BEANS ================= -->
+<section class="view" id="view-beans" aria-label="Beans" hidden>
+  <div class="page">
+    <div class="page-h"><div><h1>Beans</h1><p>Your coffees, how long they've rested, and the recipe you settled on.</p></div><button class="btn primary" type="button" id="bean-new">New bean</button></div>
+    <div class="beans-grid" id="beans-body"></div>
+  </div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section class="view" id="view-prefs" aria-label="Settings" hidden>
+  <div class="page">
+    <div class="page-h"><div><h1>Settings</h1><p>Tune Dial to your grinder, baskets, and machine. Changes save as you go.</p></div></div>
+    <form class="prefs" id="prefs" onsubmit="return false"></form>
+  </div>
+</section>
+</main>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" id="sheet-body"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(()=>{
+'use strict';
+/* ---------------- utilities ---------------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const snap=(v,st)=>Math.round(v/st)*st;
+const fx=(v,d=1)=>(Math.round(v*10**d)/10**d).toFixed(d);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const DAY=864e5;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const desk=matchMedia('(min-width: 1024px)');
+let lastBuzz=0;
+const buzz=(p=6)=>{const n=performance.now(); if(typeof p==='number'&&n-lastBuzz<35) return; lastBuzz=n; if(navigator.userActivation&&!navigator.userActivation.hasBeenActive)return; try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const isoDay=off=>{const d=new Date(Date.now()+off*DAY);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const daysOff=d=>{if(!d)return null;const t=new Date(d+'T12:00:00').getTime();return isNaN(t)?null:Math.max(0,Math.floor((Date.now()-t+DAY/2)/DAY))};
+const daysTxt=n=>n==null?'No roast date':n===0?'Roasted today':n===1?'1 day off roast':n+' days off roast';
+const restTxt=n=>n==null?'':n<5?'Still resting':n<=30?'In its window':'Past its peak';
+const fmtDate=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const fmtTime=t=>new Date(t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400)}
+
+/* ---------------- data ---------------- */
+const DEF={
+  unit:'g',density:1.0,
+  grinder:{min:1,max:40,espMax:20,step:1,def:10},
+  baskets:{
+    'single-non':{min:7,max:11,def:9},
+    'single-pressurized':{min:7,max:11,def:9},
+    'double-non':{min:16,max:21,def:18},
+    'double-pressurized':{min:14,max:20,def:18}
+  },
+  cups:{one:30,two:60},
+  target:{tMin:25,tMax:32,ratio:2.0,pi:6},
+  photos:{grinder:'',machine:''}
+};
+function sample(){
+  const now=Date.now(), at=(d,h)=>now-d*DAY+(h-new Date(now).getHours())*36e5;
+  const beans=[
+    {id:'b1',name:'Guji Hambela',roaster:'Northbound Coffee',roast:'Light',process:'Washed',roastDate:isoDay(-13),dialedShotId:'s3'},
+    {id:'b2',name:'Huila Pink Bourbon',roaster:'Saltmarsh Roasting Co.',roast:'Medium-Light',process:'Honey',roastDate:isoDay(-9),dialedShotId:'s6'},
+    {id:'b3',name:'Fieldhouse Espresso',roaster:'Common Thread',roast:'Medium-Dark',process:'Natural',roastDate:isoDay(-20),dialedShotId:null}
+  ];
+  const S=(id,b,d,h,o)=>Object.assign({id,beanId:b,date:at(d,h),size:'double',wall:'non',dose:18,retention:.5,preinf:true},o);
+  const shots=[
+    S('s1','b1',8,7,{grind:12,time:22,yield:40.1,rating:2,taste:{sour:7,bitter:1,body:3,sweet:3},notes:'Sharp lemon, thin body. Ran fast.'}),
+    S('s2','b1',7,8,{grind:10,time:26,yield:38.4,rating:3,taste:{sour:5,bitter:2,body:4,sweet:5},notes:'Better. Still a touch bright.'}),
+    S('s3','b1',6,7,{grind:8,time:31,yield:39.0,rating:5,taste:{sour:3,bitter:2,body:7,sweet:8},notes:'Peach, jasmine, syrupy. This is it.'}),
+    S('s4','b1',5,9,{grind:6,time:38,yield:37.2,rating:3,taste:{sour:1,bitter:6,body:7,sweet:4},notes:'Choked a little. Drying finish.'}),
+    S('s5','b2',4,7,{grind:13,time:21,yield:36.8,rating:2,taste:{sour:6,bitter:1,body:3,sweet:4},notes:'Watery and tart.'}),
+    S('s6','b2',3,8,{grind:11,time:27,yield:37.5,rating:4,taste:{sour:3,bitter:2,body:6,sweet:7},notes:'Red apple and brown sugar.'}),
+    S('s7','b2',2,7,{grind:9,time:33,yield:36.2,rating:3,taste:{sour:2,bitter:5,body:6,sweet:5},notes:'Heavier, a bit muddy.'}),
+    S('s8','b3',1,8,{grind:14,time:24,wall:'pressurized',yield:34.0,rating:3,taste:{sour:3,bitter:4,body:5,sweet:4},notes:'Pressurized basket. Chocolatey but flat.'})
+  ];
+  return {v:1,settings:JSON.parse(JSON.stringify(DEF)),beans,shots,
+    builder:{size:'double',wall:'non',dose:18,beanId:'b1',grind:10,retention:.5,time:28,timeMode:'timer',preinf:true,yield:36}};
+}
+function merge(d,v){
+  if(d&&typeof d==='object'&&!Array.isArray(d)){const o={};const src=(v&&typeof v==='object')?v:{};for(const k of new Set([...Object.keys(d),...Object.keys(src)]))o[k]=k in d?merge(d[k],src[k]):src[k];return o}
+  return v===undefined||v===null||(typeof d==='number'&&!isFinite(+v))?d:(typeof d==='number'?+v:v);
+}
+const KEY='dial.v1';
+let db;
+try{const raw=JSON.parse(localStorage.getItem(KEY));if(raw&&raw.v===1)db=raw}catch(e){}
+if(!db)db=sample();
+db.settings=merge(DEF,db.settings);
+db.beans=db.beans||[];db.shots=db.shots||[];
+const B=db.builder=Object.assign(sample().builder,db.builder||{});
+const S=()=>db.settings;
+let saveT;
+function save(now){clearTimeout(saveT);const w=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Could not save: browser storage is full or blocked.')}};now?w():saveT=setTimeout(w,250)}
+const beanById=id=>db.beans.find(b=>b.id===id);
+const basketKey=()=>B.size+'-'+B.wall;
+const basketCfg=()=>S().baskets[basketKey()]||DEF.baskets[basketKey()];
+const fmtGrind=v=>S().grinder.step<1?fx(v,1):String(Math.round(v));
+const yDisp=g=>S().unit==='ml'?g/(S().density||1):g;
+
+/* ---------------- gear illustrations (vector, resolution-independent) ---------------- */
+function hopperBeans(){
+  let s='',seed=11;const r=()=>(seed=(seed*9301+49297)%233280)/233280;const cols=['#4a2f1d','#5b3a24','#3f281a','#6a4429','#553620'];
+  for(let i=0;i<90;i++){const y=98+r()*68;const half=105-29*((y-28)/140)-7;const x=150+(r()*2-1)*half;const a=(r()*180)|0;
+    s+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6.2" ry="4.3" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${cols[i%5]}"/><path d="M${(x-4).toFixed(1)} ${y.toFixed(1)}h8" stroke="#2a1a10" stroke-width=".8" transform="rotate(${a} ${x.toFixed(1)} ${y.toFixed(1)})"/>`}
+  return s;
+}
+function grinderSVG(){
+  let ticks='';for(let i=0;i<=20;i++){const x=74+i*7.6;ticks+=`<path d="M${x.toFixed(1)} 178v${i%5?4:7}" stroke="#d9d2c7" stroke-opacity="${i%5?.45:.8}" stroke-width="1"/>`}
+  return `<svg viewBox="0 0 300 560" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Baratza Encore ESP grinder">
+  <defs>
+    <linearGradient id="gB" x1="0" x2="1"><stop offset="0" stop-color="#2b2927"/><stop offset=".22" stop-color="#232120"/><stop offset=".6" stop-color="#181716"/><stop offset="1" stop-color="#252321"/></linearGradient>
+    <linearGradient id="gC" x1="0" x2="1"><stop offset="0" stop-color="#2e2c2a"/><stop offset=".5" stop-color="#1c1b1a"/><stop offset="1" stop-color="#2a2826"/></linearGradient>
+    <linearGradient id="gH" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".18" stop-color="#fff" stop-opacity=".12"/><stop offset=".8" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".3"/></linearGradient>
+    <radialGradient id="gS" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a2a1c" stop-opacity=".35"/><stop offset="1" stop-color="#3a2a1c" stop-opacity="0"/></radialGradient>
+    <clipPath id="cH"><path d="M45 28H255L226 168H74Z"/></clipPath>
+    <clipPath id="cBin"><path d="M102 334H198L194 474Q193 482 185 482H115Q107 482 106 474Z"/></clipPath>
+  </defs>
+  <ellipse cx="150" cy="548" rx="132" ry="11" fill="url(#gS)"/>
+  <path d="M68 206H232L251 520Q251 534 237 534H63Q49 534 49 520Z" fill="url(#gB)"/>
+  <path d="M72 212 L56 520" stroke="#fff" stroke-opacity=".07" stroke-width="5"/>
+  <path d="M231 212 L246 520" stroke="#fff" stroke-opacity=".05" stroke-width="3"/>
+  <circle cx="150" cy="264" r="10" fill="#2e2c2a" stroke="#fff" stroke-opacity=".12"/>
+  <circle cx="150" cy="264" r="5" fill="#1a1918"/>
+  <rect x="94" y="300" width="112" height="36" rx="7" fill="#0f0e0d"/>
+  <rect x="140" y="322" width="20" height="16" rx="3" fill="#232120"/>
+  <path d="M102 334H198L194 474Q193 482 185 482H115Q107 482 106 474Z" fill="#e9e3da" fill-opacity=".16" stroke="#fff" stroke-opacity=".28"/>
+  <g clip-path="url(#cBin)"><path d="M100 440Q125 430 150 436T200 432V490H100Z" fill="#3b281b"/><path d="M100 440Q125 430 150 436T200 432" stroke="#5a3d28" stroke-width="2" fill="none"/></g>
+  <path d="M112 342V470" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>
+  <rect x="49" y="520" width="202" height="16" rx="4" fill="#111"/>
+  <rect x="61" y="166" width="178" height="44" rx="10" fill="url(#gC)"/>
+  <rect x="61" y="166" width="178" height="44" rx="10" fill="none" stroke="#fff" stroke-opacity=".08"/>
+  ${ticks}
+  <g font-family="Inter,Arial,sans-serif" font-size="7" fill="#d9d2c7" fill-opacity=".85" text-anchor="middle"><text x="74" y="197">1</text><text x="112" y="197">5</text><text x="150" y="197">10</text><text x="188" y="197">15</text><text x="226" y="197">20</text></g>
+  <path d="M150 214l-4 6h8z" fill="#9C5F3A"/>
+  <path d="M45 28H255L226 168H74Z" fill="#3b3128" fill-opacity=".08"/>
+  <g clip-path="url(#cH)">${hopperBeans()}</g>
+  <path d="M45 28H255L226 168H74Z" fill="url(#gH)" stroke="#1A1A1A" stroke-opacity=".25"/>
+  <path d="M60 36L84 160" stroke="#fff" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M240 36L222 150" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-linecap="round"/>
+  <rect x="36" y="12" width="228" height="22" rx="8" fill="#22201e" fill-opacity=".92"/>
+  <rect x="44" y="15" width="212" height="3" rx="1.5" fill="#fff" fill-opacity=".1"/>
+  <circle id="a-grinder-dial" cx="150" cy="188" r="2" fill="none"/>
+  <circle id="a-grinder-bin" cx="150" cy="410" r="2" fill="none"/>
+  </svg>`;
+}
+function machineSVG(){
+  return `<svg viewBox="0 0 430 560" preserveAspectRatio="xMidYMax meet" role="img" aria-label="Breville Bambino espresso machine">
+  <defs>
+    <linearGradient id="mS" x1="0" x2="1"><stop offset="0" stop-color="#b9b6b1"/><stop offset=".18" stop-color="#e6e3de"/><stop offset=".45" stop-color="#d3d0cb"/><stop offset=".78" stop-color="#e1ded9"/><stop offset="1" stop-color="#a9a6a1"/></linearGradient>
+    <linearGradient id="mC" x1="0" x2="1"><stop offset="0" stop-color="#8d8a85"/><stop offset=".35" stop-color="#e9e7e3"/><stop offset=".6" stop-color="#b3b0ab"/><stop offset="1" stop-color="#7c7974"/></linearGradient>
+    <linearGradient id="mT" y1="0" y2="1" x1="0" x2="0"><stop offset="0" stop-color="#cfccc7"/><stop offset="1" stop-color="#a7a49f"/></linearGradient>
+    <pattern id="mBr" width="3" height="12" patternUnits="userSpaceOnUse"><rect width="1" height="12" fill="#000" opacity=".035"/></pattern>
+    <radialGradient id="mSh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a2a1c" stop-opacity=".32"/><stop offset="1" stop-color="#3a2a1c" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="235" cy="548" rx="190" ry="12" fill="url(#mSh)"/>
+  <rect x="128" y="66" width="230" height="470" rx="16" fill="url(#mS)"/>
+  <rect x="128" y="66" width="230" height="470" rx="16" fill="url(#mBr)"/>
+  <rect x="128" y="66" width="230" height="470" rx="16" fill="none" stroke="#1A1A1A" stroke-opacity=".12"/>
+  <rect x="122" y="58" width="242" height="16" rx="6" fill="url(#mT)"/>
+  <rect x="160" y="102" width="166" height="54" rx="12" fill="#1f1e1d" fill-opacity=".06" stroke="#1A1A1A" stroke-opacity=".08"/>
+  <g fill="#1d1c1b"><circle cx="183" cy="129" r="12"/><circle cx="220" cy="129" r="12"/><circle cx="257" cy="129" r="12"/><circle cx="294" cy="129" r="12"/></g>
+  <g stroke="#f2efe9" stroke-width="1.2" fill="none" stroke-linecap="round">
+    <path d="M179 126h7v4a3 3 0 0 1-3 3h-1a3 3 0 0 1-3-3z"/>
+    <path d="M212 126h6v4a2.5 2.5 0 0 1-2.5 2.5h-1A2.5 2.5 0 0 1 212 130zM222 126h6v4a2.5 2.5 0 0 1-2.5 2.5h-1a2.5 2.5 0 0 1-2.5-2.5z"/>
+    <path d="M253 133c0-3 2-3 2-6M257 133c0-3 2-3 2-6M261 133c0-3 2-3 2-6" transform="translate(-2 0)"/>
+    <path d="M294 123v8M290 131h8"/>
+  </g>
+  <rect x="176" y="204" width="128" height="28" rx="7" fill="url(#mC)"/>
+  <rect x="186" y="230" width="108" height="6" rx="2" fill="#6f6c67"/>
+  <path d="M186 236H294L286 270Q284 278 276 278H204Q196 278 194 270Z" fill="url(#mC)"/>
+  <path d="M200 244H280" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>
+  <path d="M190 250L172 256L56 270Q40 272 40 284Q40 294 56 293L176 274L194 266Z" fill="#1d1c1b"/>
+  <path d="M60 276L170 263" stroke="#fff" stroke-opacity=".12" stroke-width="2" stroke-linecap="round"/>
+  <rect x="226" y="278" width="28" height="10" rx="2" fill="#8d8a85"/>
+  <rect x="228" y="288" width="7" height="8" rx="1.5" fill="#76736e"/><rect x="245" y="288" width="7" height="8" rx="1.5" fill="#76736e"/>
+  <path class="stream" d="M231.5 298V392M248.5 298V392" stroke="#5a3420" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="368" cy="196" r="11" fill="url(#mC)"/>
+  <path d="M370 204L384 222V404" stroke="url(#mC)" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <path d="M384 404v14" stroke="#4d4a46" stroke-width="5" stroke-linecap="round"/>
+  <rect x="116" y="474" width="252" height="54" rx="9" fill="url(#mS)"/>
+  <rect x="116" y="474" width="252" height="54" rx="9" fill="none" stroke="#1A1A1A" stroke-opacity=".14"/>
+  <rect x="124" y="462" width="236" height="14" rx="4" fill="#8f8c87"/>
+  <g stroke="#5e5b57" stroke-width="2" stroke-linecap="round">${Array.from({length:16},(_,i)=>`<path d="M${136+i*14} 466v6"/>`).join('')}</g>
+  <path d="M202 396H278L271 454Q269 462 261 462H219Q211 462 209 454Z" fill="#fbfaf8" stroke="#1A1A1A" stroke-opacity=".16"/>
+  <path d="M276 410q20 1 18 20t-23 14" stroke="#fbfaf8" stroke-width="6" fill="none"/>
+  <path d="M276 410q20 1 18 20t-23 14" stroke="#1A1A1A" stroke-opacity=".12" stroke-width="7" fill="none" style="mix-blend-mode:multiply"/>
+  <ellipse cx="240" cy="398" rx="35" ry="5" fill="#b07a4a"/>
+  <path d="M212 404V450" stroke="#1A1A1A" stroke-opacity=".05" stroke-width="5"/>
+  <circle id="a-machine-group" cx="240" cy="218" r="2" fill="none"/>
+  <circle id="a-machine-pf" cx="150" cy="268" r="2" fill="none"/>
+  <circle id="a-machine-cup" cx="240" cy="428" r="2" fill="none"/>
+  </svg>`;
+}
+const PHOTO_ANCHORS={'grinder-dial':[.5,.32],'grinder-bin':[.5,.74],'machine-group':[.55,.4],'machine-pf':[.3,.47],'machine-cup':[.55,.8]};
+function renderGear(){
+  for(const g of ['grinder','machine']){
+    const art=$('#art-'+g), src=S().photos[g];
+    if(src){
+      art.innerHTML=`<img alt="" decoding="async" sizes="(min-width:1024px) 30vw, 50vw">`;
+      const img=art.firstChild;img.onload=()=>drawLinks();img.onerror=()=>{art.innerHTML=g==='grinder'?grinderSVG():machineSVG();drawLinks()};img.src=src;
+    }else art.innerHTML=g==='grinder'?grinderSVG():machineSVG();
+  }
+}
+
+/* ---------------- rolling numerals ---------------- */
+const DIG=Array.from({length:10},(_,i)=>'<span>'+i+'</span>').join('');
+function roll(el,text){
+  text=String(text);if(el._t===text)return;
+  const ch=[...text],sig=ch.map(c=>/\d/.test(c)?'#':c).join(''),digs=ch.filter(c=>/\d/.test(c)).map(Number);
+  if(el._sig!==sig){
+    const prev=el._t;
+    el.innerHTML=ch.map(c=>/\d/.test(c)?'<span class="rd"><span class="rs">'+DIG+'</span></span>':'<span class="rc">'+esc(c)+'</span>').join('');
+    el._sig=sig;el._s=$$('.rs',el);
+    el._s.forEach(s=>{s.style.transition='none';s.style.transform='translateY(0)'});
+    void el.offsetWidth;
+    if(prev===undefined||reduceMotion){el._s.forEach((s,i)=>s.style.transform=`translateY(${-digs[i]}em)`);requestAnimationFrame(()=>el._s.forEach(s=>s.style.transition=''))}
+    else{el._s.forEach(s=>s.style.transition='');el._s.forEach((s,i)=>s.style.transform=`translateY(${-digs[i]}em)`)}
+  }else el._s.forEach((s,i)=>s.style.transform=`translateY(${-digs[i]}em)`);
+  el._t=text;
+}
+
+/* ---------------- segmented control ---------------- */
+function Seg(host,opts,value,onChange,label,cls=''){
+  host.className='seg '+cls;host.setAttribute('role','radiogroup');host.setAttribute('aria-label',label);
+  host.innerHTML='<span class="seg-thumb" aria-hidden="true"></span>'+opts.map(o=>`<button type="button" role="radio" data-v="${esc(o.v)}">${esc(o.l)}</button>`).join('');
+  const thumb=host.firstElementChild,btns=$$('button',host);
+  const place=()=>{const b=btns.find(b=>b.dataset.v===String(value));if(!b||!b.offsetWidth)return;thumb.style.width=b.offsetWidth+'px';thumb.style.transform=`translateX(${b.offsetLeft}px)`};
+  const set=(v,fire)=>{value=String(v);btns.forEach(b=>{const on=b.dataset.v===value;b.setAttribute('aria-checked',on);b.tabIndex=on?0:-1});place();if(fire){buzz(8);onChange(value)}};
+  btns.forEach((b,i)=>{b.addEventListener('click',()=>{if(b.dataset.v!==value)set(b.dataset.v,true)});
+    b.addEventListener('keydown',e=>{const n=btns.length;let j=null;if(e.key==='ArrowRight'||e.key==='ArrowDown')j=(i+1)%n;if(e.key==='ArrowLeft'||e.key==='ArrowUp')j=(i-1+n)%n;if(j!==null){e.preventDefault();btns[j].focus();set(btns[j].dataset.v,true)}})});
+  new ResizeObserver(place).observe(host);set(value,false);
+  return{set:v=>set(v,false),get:()=>value};
+}
+
+/* ---------------- ruler (scrubbable, inertial, snapping) ---------------- */
+function Ruler(host,o){
+  const cv=document.createElement('canvas');host.appendChild(cv);
+  host.tabIndex=0;host.setAttribute('role','slider');host.setAttribute('aria-labelledby',o.labelledby);
+  host.setAttribute('aria-valuemin',o.min);host.setAttribute('aria-valuemax',o.max);
+  const st=o.step,px=o.px,iMin=Math.round(o.min/st),iMax=Math.round(o.max/st);
+  let pos=o.value,val=o.value,w=0,h=0,dpr=1,raf=0,vel=0,target=null,drag=null,band=o.band||null,colors=null;
+  const cs=()=>{const c=getComputedStyle(document.documentElement);colors={ink:c.getPropertyValue('--ink').trim(),ink2:c.getPropertyValue('--ink-2').trim(),soft:c.getPropertyValue('--accent-soft').trim()}};
+  function size(){const r=host.getBoundingClientRect();if(!r.width)return;w=r.width;h=r.height;dpr=Math.min(3,devicePixelRatio||1);cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.width=w+'px';cv.style.height=h+'px';draw()}
+  function draw(){
+    if(!w)return;if(!colors)cs();
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+    const cx=w/2,toX=v=>cx+(v-pos)/st*px;
+    if(band){const x1=toX(band[0]),x2=toX(band[1]);c.fillStyle=colors.soft;c.beginPath();c.roundRect?c.roundRect(x1,4,x2-x1,28,4):c.rect(x1,4,x2-x1,28);c.fill()}
+    const i0=Math.max(iMin,Math.ceil((pos-cx/px*st)/st)-1),i1=Math.min(iMax,Math.floor((pos+cx/px*st)/st)+1);
+    c.font='500 11px Inter, system-ui, sans-serif';c.textAlign='center';c.textBaseline='top';
+    for(let i=i0;i<=i1;i++){
+      const v=i*st,x=toX(v),major=i%o.major===0,mid=o.mid&&i%o.mid===0;
+      const th=major?24:mid?15:8;const a=Math.max(.08,1-Math.pow(Math.abs(x-cx)/(w/2),1.6));
+      c.globalAlpha=a;c.fillStyle=colors.ink;c.fillRect(Math.round(x*dpr)/dpr-(major?.75:.5),4,major?1.5:1,th);
+      if(major){c.fillStyle=colors.ink2;c.fillText(o.label(v),x,40)}
+    }
+    c.globalAlpha=1;
+  }
+  const emit=()=>{const nv=+fx(clamp(snap(pos,st),o.min,o.max),2);if(nv!==val){val=nv;buzz(4);aria();o.onInput(val)}};
+  const aria=()=>{host.setAttribute('aria-valuenow',val);host.setAttribute('aria-valuetext',o.valuetext(val))};
+  function settle(v0){
+    cancelAnimationFrame(raf);
+    target=clamp(snap(pos+v0*10,st),o.min,o.max);vel=v0;
+    if(reduceMotion){pos=target;emit();draw();return}
+    const step=()=>{vel+=(target-pos)*.14;vel*=.74;pos+=vel;emit();draw();
+      if(Math.abs(target-pos)>st*.004||Math.abs(vel)>st*.004)raf=requestAnimationFrame(step);else{pos=target;emit();draw()}};
+    raf=requestAnimationFrame(step);
+  }
+  host.addEventListener('pointerdown',e=>{if(e.button)return;host.setPointerCapture(e.pointerId);cancelAnimationFrame(raf);drag={x:e.clientX,p:pos,lx:e.clientX,lt:e.timeStamp,v:0};host.classList.add('active')});
+  host.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x;pos=clamp(drag.p-dx/px*st,o.min-st*3,o.max+st*3);
+    const dt=e.timeStamp-drag.lt;if(dt>0){drag.v=.7*((e.clientX-drag.lx)/dt)+.3*drag.v;drag.lx=e.clientX;drag.lt=e.timeStamp}emit();draw()});
+  const up=e=>{if(!drag)return;const v=(e.timeStamp-drag.lt>80)?0:-drag.v/px*st*16;drag=null;host.classList.remove('active');settle(clamp(v,-st*30,st*30))};
+  host.addEventListener('pointerup',up);host.addEventListener('pointercancel',up);
+  let wt;host.addEventListener('wheel',e=>{const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:(e.shiftKey?e.deltaY:0);if(!d)return;e.preventDefault();cancelAnimationFrame(raf);pos=clamp(pos+d/px*st*.8,o.min,o.max);emit();draw();clearTimeout(wt);wt=setTimeout(()=>settle(0),110)},{passive:false});
+  host.addEventListener('keydown',e=>{let d=0;const big=e.shiftKey?10:1;
+    if(e.key==='ArrowRight'||e.key==='ArrowUp')d=st*big;else if(e.key==='ArrowLeft'||e.key==='ArrowDown')d=-st*big;else if(e.key==='PageUp')d=st*10;else if(e.key==='PageDown')d=-st*10;
+    else if(e.key==='Home'){e.preventDefault();set(o.min,true,true);return}else if(e.key==='End'){e.preventDefault();set(o.max,true,true);return}
+    if(d){e.preventDefault();set(clamp(+fx(val+d,2),o.min,o.max),true,true)}});
+  function set(v,anim=true,fire=false){v=clamp(+fx(snap(v,st),2),o.min,o.max);if(fire&&v!==val){val=v;buzz(4);aria();o.onInput(val)}else{val=v;aria()}
+    if(anim&&!reduceMotion&&w){cancelAnimationFrame(raf);target=v;const step=()=>{vel+=(target-pos)*.14;vel*=.74;pos+=vel;draw();if(Math.abs(target-pos)>st*.004||Math.abs(vel)>st*.004)raf=requestAnimationFrame(step);else{pos=target;draw()}};vel=0;raf=requestAnimationFrame(step)}
+    else{pos=v;draw()}}
+  new ResizeObserver(size).observe(host);aria();
+  return{set,setBand:b=>{band=b;draw()},redraw:()=>{colors=null;draw()}};
+}
+
+/* ---------------- grind dial (echoes the Encore ESP ring) ---------------- */
+function Dial(host,o){
+  host.tabIndex=0;host.setAttribute('role','slider');host.setAttribute('aria-labelledby','l-grind');
+  let cfg,TOTAL=320,aE,aF,rot=0,rv=0,rT=0,rraf=0,val=o.value,drag=null;
+  const ang=v=>v<=cfg.espMax?(v-cfg.min)*aE:(cfg.espMax-cfg.min)*aE+(v-cfg.espMax)*aF;
+  const inv=a=>{const eA=(cfg.espMax-cfg.min)*aE;return a<=eA?cfg.min+a/aE:cfg.espMax+(a-eA)/aF};
+  const P=(r,a)=>[(Math.sin(a*Math.PI/180)*r).toFixed(2),(-Math.cos(a*Math.PI/180)*r).toFixed(2)];
+  const arc=(r,a0,a1)=>{const[x0,y0]=P(r,a0),[x1,y1]=P(r,a1);return`M${x0} ${y0}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`};
+  function build(){
+    cfg=S().grinder;const nE=cfg.espMax-cfg.min,nF=cfg.max-cfg.espMax;aE=TOTAL/(nE+1.5*nF||1);aF=aE*1.5;
+    let t='',l='';
+    for(let v=cfg.min;v<=cfg.max+1e-9;v=+(v+cfg.step).toFixed(3)){
+      const a=ang(v),esp=v<=cfg.espMax,whole=Math.abs(v-Math.round(v))<1e-6;
+      const len=whole?(esp?11:9):5;const[x0,y0]=P(128,a),[x1,y1]=P(128-len,a);
+      t+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${esp?'#EFE9E0':'#77726B'}" stroke-width="${whole?1.3:.8}" stroke-linecap="round"/>`;
+      const r=Math.round(v);const lab=whole&&(esp?(r%2===0||r===cfg.min):(r%5===0||r===cfg.max));
+      if(lab)l+=`<text transform="rotate(${a.toFixed(2)}) translate(0 -104)" text-anchor="middle" dominant-baseline="middle" font-size="${esp?10:9}" font-weight="${esp?500:400}" fill="${esp?'#EFE9E0':'#8E887F'}" font-family="Inter,system-ui,sans-serif">${r}</text>`;
+    }
+    const eEnd=ang(cfg.espMax);
+    host.innerHTML=`<svg viewBox="-150 -150 300 300" aria-hidden="true">
+      <circle r="147" fill="#E9E3DA"/><circle r="147" fill="none" stroke="#1A1A1A" stroke-opacity=".08"/>
+      <g id="dial-ring">
+        <circle r="136" fill="#1E1D1C"/>
+        <circle r="136" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="1"/>
+        <path d="${arc(141.5,0,eEnd)}" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="${arc(141.5,eEnd+2,TOTAL)}" stroke="#A39D94" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        ${t}${l}
+        <circle r="92" fill="#262423"/>
+        <circle r="92" fill="none" stroke="#000" stroke-opacity=".35"/>
+        ${Array.from({length:36},(_,i)=>`<line x1="${P(92,i*10)[0]}" y1="${P(92,i*10)[1]}" x2="${P(86,i*10)[0]}" y2="${P(86,i*10)[1]}" stroke="#fff" stroke-opacity=".06"/>`).join('')}
+      </g>
+      <circle r="82" fill="#F3EFE9"/><circle r="82" fill="none" stroke="#1A1A1A" stroke-opacity=".1"/>
+      <path d="M0 -136L-7 -149H7Z" fill="#9C5F3A"/>
+    </svg>
+    <div class="dial-center"><div class="big"><span class="roll" id="v-grind"></span></div><div class="dial-zone" id="dial-zone"></div></div>`;
+    host.setAttribute('aria-valuemin',cfg.min);host.setAttribute('aria-valuemax',cfg.max);
+    val=clamp(snap(val,cfg.step),cfg.min,cfg.max);rot=-ang(val);rT=rot;apply();show();
+  }
+  const apply=()=>{const g=host.querySelector('#dial-ring');if(g)g.setAttribute('transform',`rotate(${rot.toFixed(2)})`)};
+  function springTo(t){rT=t;cancelAnimationFrame(rraf);if(reduceMotion){rot=t;apply();return}
+    const step=()=>{rv+=(rT-rot)*.15;rv*=.7;rot+=rv;apply();if(Math.abs(rT-rot)>.02||Math.abs(rv)>.02)rraf=requestAnimationFrame(step);else{rot=rT;rv=0;apply()}};rraf=requestAnimationFrame(step)}
+  function show(){roll($('#v-grind',host),fmtGrind(val));const z=$('#dial-zone',host),esp=val<=cfg.espMax;z.textContent=esp?'Espresso range':'Filter range';z.classList.toggle('filter',!esp);
+    host.setAttribute('aria-valuenow',val);host.setAttribute('aria-valuetext',`Setting ${fmtGrind(val)}, ${esp?'espresso':'filter'} range`)}
+  function set(v,fire){v=clamp(+fx(snap(v,cfg.step),2),cfg.min,cfg.max);const ch=v!==val;val=v;show();springTo(-ang(val));if(fire&&ch){buzz(10);o.onInput(val)}}
+  const pAng=e=>{const r=host.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI};
+  host.addEventListener('pointerdown',e=>{if(e.button)return;host.setPointerCapture(e.pointerId);cancelAnimationFrame(rraf);drag={last:pAng(e),start:-rot,acc:0};host.classList.add('active')});
+  host.addEventListener('pointermove',e=>{if(!drag)return;const a=pAng(e);let d=a-drag.last;if(d>180)d-=360;if(d<-180)d+=360;drag.last=a;drag.acc+=d;
+    const cur=clamp(drag.start-drag.acc,-6,TOTAL+6);rot=-cur;apply();
+    const nv=clamp(+fx(snap(inv(clamp(cur,0,TOTAL)),cfg.step),2),cfg.min,cfg.max);if(nv!==val){val=nv;show();buzz(10);o.onInput(val)}});
+  const up=()=>{if(!drag)return;drag=null;host.classList.remove('active');springTo(-ang(val))};
+  host.addEventListener('pointerup',up);host.addEventListener('pointercancel',up);
+  host.addEventListener('keydown',e=>{const s=cfg.step;let d=0;if(e.key==='ArrowUp'||e.key==='ArrowRight')d=s;else if(e.key==='ArrowDown'||e.key==='ArrowLeft')d=-s;else if(e.key==='PageUp')d=5*s;else if(e.key==='PageDown')d=-5*s;
+    else if(e.key==='Home'){e.preventDefault();set(cfg.min,true);return}else if(e.key==='End'){e.preventDefault();set(cfg.max,true);return}
+    if(d){e.preventDefault();set(val+d,true)}});
+  build();
+  return{set,rebuild:build,get:()=>val};
+}
+
+/* ---------------- shot timer ---------------- */
+function Timer(host){
+  const R=92,C=2*Math.PI*R;let running=false,t0=0,raf=0,el=0;
+  const P=(r,s)=>{const a=s/60*2*Math.PI;return[(Math.sin(a)*r).toFixed(2),(-Math.cos(a)*r).toFixed(2)]};
+  const arc=(r,s0,s1)=>{const[x0,y0]=P(r,s0),[x1,y1]=P(r,s1);return`M${x0} ${y0}A${r} ${r} 0 ${(s1-s0)>30?1:0} 1 ${x1} ${y1}`};
+  function build(){
+    const T=S().target;let ticks='';
+    for(let s=0;s<60;s+=1){const[x0,y0]=P(104,s),[x1,y1]=P(s%5?101:99,s);ticks+=`<line class="t-tick" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" ${s%5?'stroke-opacity=".5"':''}/>`}
+    const lbl=[0,15,30,45].map(s=>{const[x,y]=P(80,s);return`<text class="t-lbl" x="${x}" y="${y}">${s}</text>`}).join('');
+    host.innerHTML=`<svg viewBox="-112 -112 224 224" aria-hidden="true">${ticks}
+      <circle class="t-track" r="${R}"/>
+      <path class="t-band" d="${arc(R,T.tMin,T.tMax)}"/>
+      <path class="t-pi" id="t-pi" d="${arc(R+9,0,Math.max(1,T.pi))}"/>
+      <circle class="t-prog" id="t-prog" r="${R}" transform="rotate(-90)" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+      ${lbl}</svg>
+      <div class="timer-center"><div class="big"><span class="roll" id="v-timer"></span><span class="unit">s</span></div><div class="phase" id="t-phase"></div></div>`;
+    $('#t-pi',host).style.display=B.preinf?'':'none';
+    paint(B.time,false);
+  }
+  function paint(s,live){
+    $('#t-prog',host).setAttribute('stroke-dashoffset',(C*(1-Math.min(s,60)/60)).toFixed(2));
+    const r=$('#v-timer',host);r.classList.toggle('live',live);roll(r,fx(s,1));
+    const T=S().target;$('#t-phase',host).textContent=live?(B.preinf&&s<T.pi?'Pre-infusion':'Extracting'):(s>=T.tMin&&s<=T.tMax?'In target band':`Target ${T.tMin}–${T.tMax} s`);
+  }
+  function tick(){el=(performance.now()-t0)/1000;paint(el,true);raf=requestAnimationFrame(tick)}
+  function start(){running=true;t0=performance.now();host.classList.add('running');$('#gear-layer').classList.add('pouring');$('#t-start').textContent='Stop';buzz([12]);tick()}
+  function stop(){running=false;cancelAnimationFrame(raf);host.classList.remove('running');$('#gear-layer').classList.remove('pouring');$('#t-start').textContent='Start';buzz([10,40,10]);
+    const t=clamp(Math.round(el*10)/10,15,60);setTime(t);paint(t,false);if(el<15)toast('Shots under 15 s are logged as 15 s.')}
+  return{build,toggle:()=>running?stop():start(),reset:()=>{if(running){running=false;cancelAnimationFrame(raf);host.classList.remove('running');$('#gear-layer').classList.remove('pouring');$('#t-start').textContent='Start'}el=0;paint(0,false)},paint:s=>paint(s,false),get running(){return running}};
+}
+
+/* ---------------- manual time picker ---------------- */
+function Picker(host,onPick){
+  const H=44,MIN=15,MAX=60;let cur=null,st;
+  host.innerHTML='<div class="pk-pad"></div>'+Array.from({length:MAX-MIN+1},(_,i)=>`<div class="pk" data-v="${MIN+i}">${MIN+i}</div>`).join('')+'<div class="pk-pad"></div>';
+  host.setAttribute('aria-valuemin',MIN);host.setAttribute('aria-valuemax',MAX);
+  const items=$$('.pk',host);
+  const mark=v=>{const T=S().target;items.forEach(it=>{const n=+it.dataset.v;it.classList.toggle('on',n===v);it.classList.toggle('band',n!==v&&n>=T.tMin&&n<=T.tMax)})};
+  host.addEventListener('scroll',()=>{const v=clamp(MIN+Math.round(host.scrollTop/H),MIN,MAX);if(v!==cur){cur=v;mark(v);buzz(4);host.setAttribute('aria-valuenow',v);host.setAttribute('aria-valuetext',v+' seconds');clearTimeout(st);st=setTimeout(()=>onPick(cur),60)}},{passive:true});
+  host.addEventListener('keydown',e=>{let d=0;if(e.key==='ArrowUp'||e.key==='ArrowRight')d=1;if(e.key==='ArrowDown'||e.key==='ArrowLeft')d=-1;if(e.key==='PageUp')d=5;if(e.key==='PageDown')d=-5;if(d){e.preventDefault();set(clamp((cur??MIN)+d,MIN,MAX),true)}});
+  items.forEach(it=>it.addEventListener('click',()=>set(+it.dataset.v,true)));
+  function set(v,smooth){v=clamp(Math.round(v),MIN,MAX);host.scrollTo({top:(v-MIN)*H,behavior:smooth&&!reduceMotion?'smooth':'auto'});cur=v;mark(v);host.setAttribute('aria-valuenow',v);host.setAttribute('aria-valuetext',v+' seconds')}
+  return{set,refresh:()=>mark(cur)};
+}
+
+/* ---------------- brew screen ---------------- */
+let segSize,segWall,segMode,segUnit,rDose,rYield,dial,timer,picker;
+function setTime(t){B.time=t;picker.set(t,false);roll($('#v-time'),String(Math.round(t)));update()}
+function doseBand(){const c=basketCfg();return[c.min,c.max]}
+function yieldBand(){const e=eff(),r=S().target.ratio;return[clamp(e*(r-.25),15,60),clamp(e*(r+.25),15,60)]}
+const eff=()=>B.dose*(1-B.retention/100);
+
+function initBrew(){
+  segSize=Seg($('#seg-size'),[{v:'single',l:'Single'},{v:'double',l:'Double'}],B.size,v=>{B.size=v;B.dose=basketCfg().def;rDose.set(B.dose);onBasket()},'Basket size','dark');
+  segWall=Seg($('#seg-wall'),[{v:'pressurized',l:'Pressurized'},{v:'non',l:'Non-pressurized'}],B.wall,v=>{B.wall=v;const c=basketCfg();if(B.dose<c.min||B.dose>c.max){B.dose=c.def;rDose.set(B.dose)}onBasket()},'Basket wall');
+  rDose=Ruler($('#ruler-dose'),{min:7,max:22,step:.1,px:9,major:10,mid:5,value:B.dose,band:doseBand(),labelledby:'l-dose',label:v=>String(Math.round(v)),valuetext:v=>fx(v,1)+' grams',onInput:v=>{B.dose=v;rYield.setBand(yieldBand());update()}});
+  rYield=Ruler($('#ruler-yield'),{min:15,max:60,step:.5,px:13,major:10,mid:2,value:B.yield,band:yieldBand(),labelledby:'l-yield',label:v=>String(Math.round(yDisp(v))),valuetext:v=>fx(yDisp(v),1)+(S().unit==='ml'?' millilitres':' grams'),onInput:v=>{B.yield=v;update()}});
+  dial=Dial($('#dial'),{value:B.grind,onInput:v=>{B.grind=v;update()}});
+  timer=Timer($('#timer'));timer.build();
+  picker=Picker($('#picker'),v=>{if(v!==Math.round(B.time)){B.time=v;roll($('#v-time'),String(v));timer.paint(v);update()}});
+  segMode=Seg($('#seg-tmode'),[{v:'timer',l:'Shot timer'},{v:'manual',l:'Manual'}],B.timeMode,v=>{B.timeMode=v;showMode();save()},'Brew time mode','small');
+  segUnit=Seg($('#seg-unit'),[{v:'g',l:'g'},{v:'ml',l:'ml'}],S().unit,v=>{S().unit=v;onUnit();save()},'Yield unit','small');
+  $('#ret').addEventListener('input',e=>{B.retention=+e.target.value;buzz(3);update()});
+  $('#g-minus').onclick=()=>dial.set(B.grind-S().grinder.step,true);
+  $('#g-plus').onclick=()=>dial.set(B.grind+S().grinder.step,true);
+  $('#g-reset').onclick=()=>dial.set(S().grinder.def,true);
+  $('#t-start').onclick=()=>timer.toggle();
+  $('#t-reset').onclick=()=>timer.reset();
+  $('#pi').onclick=()=>{B.preinf=!B.preinf;buzz(8);applyPI();save()};
+  $('#p1').onclick=()=>{B.yield=S().cups.one;rYield.set(B.yield);buzz(8);update()};
+  $('#p2').onclick=()=>{B.yield=S().cups.two;rYield.set(B.yield);buzz(8);update()};
+  $('#btn-taste').onclick=openTaste;
+  $('#bean-edit').onclick=()=>{const b=beanById(B.beanId);openBean(b||null)};
+  // card ↔ gear highlight
+  $$('[data-link]').forEach(c=>{const on=()=>{hot=c.dataset.link;c.classList.add('is-hot');drawLinks()},off=()=>{if(c.contains(document.activeElement)&&c.matches(':focus-within'))return;hot=null;c.classList.remove('is-hot');drawLinks()};
+    c.addEventListener('pointerenter',on);c.addEventListener('pointerleave',off);c.addEventListener('focusin',on);c.addEventListener('focusout',()=>setTimeout(off,0))});
+  applyBuilder(false);
+}
+function applyPI(){const p=$('#pi');p.setAttribute('aria-checked',B.preinf);const pi=$('#t-pi');if(pi)pi.style.display=B.preinf?'':'none';timer.paint(B.time)}
+function showMode(){$('#time-timer').hidden=B.timeMode!=='timer';$('#time-manual').hidden=B.timeMode!=='manual';if(B.timeMode==='manual')requestAnimationFrame(()=>picker.set(B.time,false))}
+function onBasket(){rDose.setBand(doseBand());rYield.setBand(yieldBand());update()}
+function onUnit(){$('#u-yield').textContent=S().unit;rYield.redraw();segUnit.set(S().unit);presetLabels();update()}
+function presetLabels(){const u=S().unit;$('#p1').textContent=`1 cup · ${fx(yDisp(S().cups.one),0)} ${u}`;$('#p2').textContent=`2 cup · ${fx(yDisp(S().cups.two),0)} ${u}`}
+function applyBuilder(anim=true){
+  segSize.set(B.size);segWall.set(B.wall);segMode.set(B.timeMode);
+  rDose.set(B.dose,anim);rYield.set(B.yield,anim);rDose.setBand(doseBand());rYield.setBand(yieldBand());
+  dial.set(B.grind,false);$('#ret').value=B.retention;
+  picker.set(B.time,false);roll($('#v-time'),String(Math.round(B.time)));timer.paint(B.time);
+  applyPI();showMode();presetLabels();$('#u-yield').textContent=S().unit;renderCarousel();update();
+}
+
+function analyze(){
+  const T=S().target,e=eff(),ratio=B.yield/e,flow=B.yield/B.time,g=S().grinder;
+  const mid=(T.tMin+T.tMax)/2,half=(T.tMax-T.tMin)/2;
+  const tz=(B.time-mid)/(half+4),rz=(ratio-T.ratio)/.6;
+  const score=clamp(.7*tz+.3*rz,-1.4,1.4)/1.4;
+  let hint,zone='bal';
+  const steps=n=>n*g.step;
+  if(B.time<T.tMin){const n=B.time<T.tMin-6?2:1;const to=clamp(B.grind-steps(n),g.min,g.max);zone='sour';
+    hint=to===B.grind?`Running fast at ${fx(B.time,0)} s and already at the finest setting. Try a bigger dose.`:`Running fast. Try grinding finer: go from ${fmtGrind(B.grind)} → ${fmtGrind(to)} on the Encore ESP.`}
+  else if(B.time>T.tMax){const n=B.time>T.tMax+6?2:1;const to=clamp(B.grind+steps(n),g.min,g.max);zone='bit';
+    hint=to===B.grind?`Running slow at ${fx(B.time,0)} s. Try a smaller dose.`:`Running slow. Try grinding coarser: go from ${fmtGrind(B.grind)} → ${fmtGrind(to)} on the Encore ESP.`}
+  else if(ratio<T.ratio-.3){zone='sour';hint=`Time is on target, but the ratio is short. Pull to about ${fx(yDisp(e*T.ratio),0)} ${S().unit} for more sweetness.`}
+  else if(ratio>T.ratio+.4){zone='bit';hint=`Time is on target, but the ratio is long. Stop near ${fx(yDisp(e*T.ratio),0)} ${S().unit} for more body.`}
+  else hint=`Looks balanced. Taste it, then log it.`;
+  if(Math.abs(score)<.22&&B.time>=T.tMin&&B.time<=T.tMax)zone='bal';
+  return{e,ratio,flow,score,hint,zone};
+}
+function update(){
+  const a=analyze();
+  roll($('#v-dose'),fx(B.dose,1));roll($('#v-yield'),fx(yDisp(B.yield),1));roll($('#v-ret'),fx(B.retention,1));
+  $('#ret').style.setProperty('--p',(B.retention/3*100)+'%');$('#ret').setAttribute('aria-valuetext',fx(B.retention,1)+' percent');
+  $('#eff').textContent=fx(a.e,2)+' g';
+  $('#v-basket').textContent=(B.size==='double'?'Double':'Single');
+  const c=basketCfg();$('#basket-range').textContent=`${B.wall==='pressurized'?'Dual-wall, pressurized':'Single-wall, non-pressurized'} · ${c.min}–${c.max} g`;
+  roll($('#s-ratio'),fx(a.ratio,2));roll($('#s-flow'),fx(a.flow,2));roll($('#s-io'),fx(B.dose,1)+'→'+fx(B.yield,1));
+  $('#summary').setAttribute('aria-label',`Shot summary: ratio 1 to ${fx(a.ratio,2)}, flow ${fx(a.flow,2)} grams per second`);
+  $('#needle').style.left=(50+a.score*46)+'%';
+  $('#gl-sour').classList.toggle('on',a.zone==='sour');$('#gl-bal').classList.toggle('on',a.zone==='bal');$('#gl-bit').classList.toggle('on',a.zone==='bit');
+  $('#hint').textContent=a.hint;$('#pnote').hidden=B.wall!=='pressurized';
+  const b=beanById(B.beanId);$('#brew-sub').textContent=b?`${b.name} · ${b.roaster||'Unknown roaster'} · ${daysTxt(daysOff(b.roastDate)).toLowerCase()}`:'Pick or add a coffee to start logging shots.';
+  save();
+}
+function renderCarousel(){
+  const car=$('#bean-car');
+  car.innerHTML=db.beans.map(b=>{const d=daysOff(b.roastDate);return`<button type="button" class="bean-chip" data-id="${b.id}" aria-pressed="${b.id===B.beanId}"><b>${esc(b.name)}</b><span>${esc(b.roaster||'')}</span><span class="d">${d==null?'—':d+'d off roast'}${b.dialedShotId?' · Dialed':''}</span></button>`}).join('')+`<button type="button" class="bean-chip add" id="bean-add">+ New bean</button>`;
+  $$('.bean-chip[data-id]',car).forEach(btn=>btn.onclick=()=>{B.beanId=btn.dataset.id;buzz(8);renderCarousel();update()});
+  $('#bean-add').onclick=()=>openBean(null);
+  const sel=$('.bean-chip[aria-pressed="true"]',car);if(sel)car.scrollTo({left:sel.offsetLeft-car.offsetLeft-2,behavior:'auto'});
+  const b=beanById(B.beanId),m=$('#bean-meta');
+  if(!b){m.innerHTML='<p class="sub" style="margin:0">No coffee selected.</p>';$('#bean-edit').hidden=true;return}
+  $('#bean-edit').hidden=false;
+  const d=daysOff(b.roastDate),ds=db.shots.filter(s=>s.beanId===b.id),dial=ds.find(s=>s.id===b.dialedShotId);
+  m.innerHTML=`<div class="row between" style="align-items:flex-end"><div><div style="font-size:30px;font-weight:300;letter-spacing:-.03em;line-height:1" class="num">${d??'—'}<span class="sub" style="font-size:13px;margin-left:6px;letter-spacing:0">days off roast</span></div><div class="sub" style="margin-top:4px">${restTxt(d)}</div></div>${dial?'<span class="badge">Dialed-in</span>':''}</div>
+  <div class="pill-meta" style="margin-top:12px"><span>${esc(b.roast)}</span><span>${esc(b.process)}</span><span>${ds.length} shot${ds.length===1?'':'s'}</span></div>
+  ${dial?`<button class="btn sm" type="button" id="load-dialed" style="margin-top:12px">Load dialed-in recipe · grind ${fmtGrind(dial.grind)}</button>`:''}`;
+  const ld=$('#load-dialed');if(ld)ld.onclick=()=>loadShot(dial.id,false);
+}
+
+/* ---------------- connector lines ---------------- */
+let hot=null,linkRaf=0;
+function anchorPoint(key){
+  const art=$('#art-'+key.split('-')[0]);if(!art)return null;
+  const img=art.querySelector('img');
+  if(img){if(!img.naturalWidth)return null;const r=img.getBoundingClientRect(),s=Math.min(r.width/img.naturalWidth,r.height/img.naturalHeight),w=img.naturalWidth*s,h=img.naturalHeight*s,x0=r.left+(r.width-w)/2,y0=r.top+(r.height-h),p=PHOTO_ANCHORS[key];return{x:x0+p[0]*w,y:y0+p[1]*h}}
+  const el=document.getElementById('a-'+key);if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};
+}
+function drawLinks(){
+  cancelAnimationFrame(linkRaf);
+  linkRaf=requestAnimationFrame(()=>{
+    const svg=$('#links');
+    if(!desk.matches||$('#view-brew').hidden){svg.innerHTML='';return}
+    let out='';
+    for(const card of $$('[data-link]')){
+      const k=card.dataset.link,a=anchorPoint(k);if(!a)continue;const r=card.getBoundingClientRect();
+      if(r.bottom<60||r.top>innerHeight)continue;
+      let sx,sy;
+      if(a.x<r.left){sx=r.left;sy=clamp(a.y,r.top+28,r.bottom-28)}else if(a.x>r.right){sx=r.right;sy=clamp(a.y,r.top+28,r.bottom-28)}else{sx=clamp(a.x,r.left+28,r.right-28);sy=a.y<r.top?r.top:r.bottom}
+      const mx=(sx+a.x)/2,on=hot===k?' on':'';
+      const d=Math.abs(a.x-sx)>Math.abs(a.y-sy)?`M${sx} ${sy}C${mx} ${sy} ${mx} ${a.y} ${a.x} ${a.y}`:`M${sx} ${sy}C${sx} ${(sy+a.y)/2} ${a.x} ${(sy+a.y)/2} ${a.x} ${a.y}`;
+      out+=`<path class="link-path${on}" d="${d}"/><circle class="link-glow${on}" cx="${a.x}" cy="${a.y}" r="13"/><circle class="link-dot" cx="${a.x}" cy="${a.y}" r="3.5"/><circle class="link-dot" cx="${sx}" cy="${sy}" r="2.5"/>`;
+    }
+    svg.innerHTML=out;
+  });
+}
+function onScroll(){
+  if(!$('#view-brew').hidden&&!desk.matches){const g=$('#gear-layer'),y=scrollY,h=g.offsetHeight||1;
+    if(!reduceMotion){g.style.transform=`translate3d(0,${(y*.4).toFixed(1)}px,0) scale(${(1+Math.min(y,h)*.00025).toFixed(4)})`;}
+    g.style.opacity=clamp(1-y/(h*.95),0,1).toFixed(3)}
+  drawLinks();
+}
+
+/* ---------------- sheets ---------------- */
+let lastFocus=null;
+function openSheet(html){
+  const w=$('#sheet'),b=$('#sheet-body');lastFocus=document.activeElement;b.innerHTML=html;w.hidden=false;
+  requestAnimationFrame(()=>{w.classList.add('open');const f=$('input,textarea,button',b);f&&f.focus({preventScroll:true})});
+}
+function closeSheet(){const w=$('#sheet');w.classList.remove('open');setTimeout(()=>{w.hidden=true;$('#sheet-body').innerHTML=''},280);lastFocus&&lastFocus.focus&&lastFocus.focus({preventScroll:true})}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
+$('#sheet').addEventListener('click',e=>{if(e.target.matches('[data-close]'))closeSheet()});
+
+const ROASTS=['Light','Medium-Light','Medium','Medium-Dark','Dark'],ROAST_L={'Medium-Light':'Med-Light','Medium-Dark':'Med-Dark'};
+const PROCS=['Washed','Natural','Honey','Other'];
+function openBean(bean){
+  const isNew=!bean;bean=bean||{id:uid(),name:'',roaster:'',roast:'Medium-Light',process:'Washed',roastDate:isoDay(-7),dialedShotId:null};
+  let roast=bean.roast,proc=bean.process,armed=false;
+  openSheet(`<h2 id="sheet-title">${isNew?'New bean':'Edit bean'}</h2><p class="lede">Saved beans appear in the Coffee card on the Brew screen.</p>
+  <form id="bean-form">
+    <label class="field">Bean name<input id="f-name" required maxlength="60" value="${esc(bean.name)}" placeholder="e.g. Guji Hambela"></label>
+    <label class="field">Roaster<input id="f-roaster" maxlength="60" value="${esc(bean.roaster)}" placeholder="e.g. Northbound Coffee"></label>
+    <div class="field"><span id="l-roast">Roast level</span><div id="f-roast"></div></div>
+    <div class="field"><span id="l-proc">Process</span><div class="row" role="group" aria-labelledby="l-proc">${PROCS.map(p=>`<button type="button" class="chip" data-p="${p}" aria-pressed="${p===proc}">${p}</button>`).join('')}</div></div>
+    <div class="row" style="align-items:flex-end;gap:16px"><label class="field" style="flex:1;min-width:160px">Roast date<input type="date" id="f-date" value="${esc(bean.roastDate||'')}" max="${isoDay(0)}"></label><span class="sub" id="f-days" style="padding-bottom:12px"></span></div>
+    <footer>${isNew?'':'<button type="button" class="btn ghost" id="f-del">Delete bean</button><span class="spacer"></span>'}<button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">${isNew?'Save bean':'Save changes'}</button></footer>
+  </form>`);
+  Seg($('#f-roast'),ROASTS.map(r=>({v:r,l:ROAST_L[r]||r})),roast,v=>roast=v,'Roast level','small');
+  $$('[data-p]').forEach(b=>b.onclick=()=>{proc=b.dataset.p;buzz(6);$$('[data-p]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  const days=()=>$('#f-days').textContent=daysTxt(daysOff($('#f-date').value));days();$('#f-date').oninput=days;
+  const del=$('#f-del');if(del)del.onclick=()=>{if(!armed){armed=true;del.textContent='Tap again to delete';del.style.color='var(--accent)';return}
+    db.beans=db.beans.filter(b=>b.id!==bean.id);db.shots=db.shots.filter(s=>s.beanId!==bean.id);if(B.beanId===bean.id)B.beanId=db.beans[0]?.id||null;save(true);closeSheet();refreshAll();toast('Bean and its shots deleted')};
+  $('#bean-form').onsubmit=e=>{e.preventDefault();const name=$('#f-name').value.trim();if(!name){$('#f-name').focus();toast('Give the bean a name to save it.');return}
+    Object.assign(bean,{name,roaster:$('#f-roaster').value.trim(),roast,process:proc,roastDate:$('#f-date').value});
+    if(isNew){db.beans.push(bean);B.beanId=bean.id}save(true);closeSheet();refreshAll();buzz(12);toast(isNew?'Bean saved':'Changes saved')};
+}
+
+function openTaste(){
+  const b=beanById(B.beanId);if(!b){toast('Add a coffee first, then log the shot.');openBean(null);return}
+  const a=analyze(),t={sour:5,bitter:5,body:5,sweet:5};let rating=0;
+  const rows=[['sour','Sourness','None','Very sour'],['bitter','Bitterness','None','Very bitter'],['body','Body','Thin','Heavy'],['sweet','Sweetness','None','Very sweet']];
+  openSheet(`<h2 id="sheet-title">How did it taste?</h2><p class="lede">${esc(b.name)} · ${fmtDate(Date.now())}</p>
+  <div class="shot-recap"><span>${fx(B.dose,1)} → ${fx(B.yield,1)} g</span><span>1:${fx(a.ratio,2)}</span><span>${fx(B.time,0)} s</span><span>Grind ${fmtGrind(B.grind)}</span><span>${B.size==='double'?'Double':'Single'} · ${B.wall==='non'?'Non-pressurized':'Pressurized'}</span></div>
+  <form id="taste-form">
+    ${rows.map(([k,l,lo,hi])=>`<div><div class="taste-row"><label for="t-${k}" class="lab">${l}</label><input type="range" id="t-${k}" min="0" max="10" step="1" value="5" style="--p:50%"><output id="o-${k}" for="t-${k}">5</output></div><div class="taste-row"><span></span><div class="taste-ends" style="grid-column:auto;margin-top:-6px"><span>${lo}</span><span>${hi}</span></div><span></span></div></div>`).join('')}
+    <div class="field"><span id="l-rate">Overall</span><div class="rate" role="radiogroup" aria-labelledby="l-rate">${[1,2,3,4,5].map(n=>`<button type="button" role="radio" aria-checked="false" data-r="${n}" aria-label="${n} of 5">${n}</button>`).join('')}</div></div>
+    <label class="field">Notes<textarea id="t-notes" maxlength="400" placeholder="Flavours, texture, what to change next time"></textarea></label>
+    <footer><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">Save to log</button></footer>
+  </form>`);
+  rows.forEach(([k])=>{const i=$('#t-'+k);i.oninput=()=>{t[k]=+i.value;$('#o-'+k).textContent=i.value;i.style.setProperty('--p',i.value*10+'%');buzz(3)}});
+  const rb=$$('[data-r]');const setR=n=>{rating=n;rb.forEach(x=>{const on=+x.dataset.r===n;x.setAttribute('aria-checked',on);x.tabIndex=on||(!n&&x.dataset.r==='1')?0:-1})};setR(0);
+  rb.forEach((x,i)=>{x.onclick=()=>{setR(+x.dataset.r);buzz(8)};x.onkeydown=e=>{let j=null;if(e.key==='ArrowRight'||e.key==='ArrowUp')j=Math.min(4,i+1);if(e.key==='ArrowLeft'||e.key==='ArrowDown')j=Math.max(0,i-1);if(j!==null){e.preventDefault();rb[j].focus();setR(j+1)}}});
+  $('#taste-form').onsubmit=e=>{e.preventDefault();if(!rating){toast('Pick an overall rating from 1 to 5.');rb[0].focus();return}
+    db.shots.push({id:uid(),beanId:b.id,date:Date.now(),size:B.size,wall:B.wall,dose:B.dose,retention:B.retention,grind:B.grind,time:B.time,yield:B.yield,preinf:B.preinf,taste:{...t},rating,notes:$('#t-notes').value.trim()});
+    save(true);closeSheet();buzz([10,30,10]);renderCarousel();toast('Shot saved to the log')};
+}
+
+/* ---------------- log ---------------- */
+function chartSVG(shots,dialedId){
+  const W=340,H=150,L=30,R=12,T=14,Bt=30;
+  const gs=shots.map(s=>s.grind);let x0=Math.floor(Math.min(...gs))-1,x1=Math.ceil(Math.max(...gs))+1;if(x1-x0<4){x0-=1;x1+=1}
+  const X=g=>L+(g-x0)/(x1-x0)*(W-L-R),Y=r=>T+(5-r)/4*(H-T-Bt);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rating versus grind setting for ${shots.length} shots">`;
+  for(let r=1;r<=5;r++)s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(r)}" y2="${Y(r)}"/><text class="ax" x="${L-8}" y="${Y(r)+3}" text-anchor="end">${r}</text>`;
+  const stp=(x1-x0)>12?2:1;for(let g=Math.ceil(x0);g<=x1;g+=stp)s+=`<text class="ax" x="${X(g)}" y="${H-Bt+16}" text-anchor="middle">${g}</text>`;
+  s+=`<text class="ax" x="${L}" y="${H-3}">← finer</text><text class="ax" x="${W-R}" y="${H-3}" text-anchor="end">coarser →</text><text class="ax" x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle">Grind setting</text>`;
+  const by={};shots.forEach(x=>{(by[x.grind]=by[x.grind]||[]).push(x.rating)});
+  const avg=Object.keys(by).map(Number).sort((a,b)=>a-b).map(g=>[g,by[g].reduce((a,b)=>a+b,0)/by[g].length]);
+  if(avg.length>1)s+=`<path class="trend" d="${avg.map(([g,r],i)=>(i?'L':'M')+X(g).toFixed(1)+' '+Y(r).toFixed(1)).join('')}"/>`;
+  shots.forEach(x=>{const best=x.id===dialedId;s+=`<circle class="pt${best?' best':''}" cx="${X(x.grind).toFixed(1)}" cy="${Y(x.rating).toFixed(1)}" r="${best?5:4}"/>`;if(best)s+=`<circle class="ring" cx="${X(x.grind).toFixed(1)}" cy="${Y(x.rating).toFixed(1)}" r="9"/>`});
+  return s+'</svg>';
+}
+function renderLog(){
+  const host=$('#log-body');
+  if(!db.shots.length){host.innerHTML='<p class="empty">No shots yet. Pull one on the Brew screen and tap “Taste &amp; log”.</p>';return}
+  const groups=db.beans.map(b=>({b,shots:db.shots.filter(s=>s.beanId===b.id).sort((a,c)=>c.date-a.date)})).filter(g=>g.shots.length).sort((a,c)=>c.shots[0].date-a.shots[0].date);
+  host.innerHTML=groups.map(({b,shots})=>{const d=daysOff(b.roastDate);return`<section class="lgroup panel" aria-label="${esc(b.name)}">
+    <div style="min-width:0">
+      <div class="lg-h"><h2>${esc(b.name)}</h2>${b.dialedShotId&&shots.some(s=>s.id===b.dialedShotId)?'<span class="badge">Dialed-in</span>':''}</div>
+      <div class="pill-meta"><span>${esc(b.roaster||'Unknown roaster')}</span><span>${esc(b.roast)}</span><span>${esc(b.process)}</span><span>${daysTxt(d)}</span></div>
+      <ol class="shots">${shots.map(s=>{const r=s.yield/(s.dose*(1-(s.retention||0)/100));return`<li class="shot">
+        <button type="button" class="shot-main" data-load="${s.id}" aria-label="Load shot from ${fmtDate(s.date)} into the builder">
+          <span class="shot-when"><b>${fmtDate(s.date)}</b>${fmtTime(s.date)}</span>
+          <span class="shot-nums"><span><span class="k">In→out</span>${fx(s.dose,1)} → ${fx(s.yield,1)} g</span><span><span class="k">Ratio</span>1:${fx(r,2)}</span><span><span class="k">Time</span>${fx(s.time,0)} s</span><span><span class="k">Grind</span>${fmtGrind(s.grind)}</span></span>
+          <span class="stars" aria-label="Rated ${s.rating} of 5">${[1,2,3,4,5].map(n=>`<i class="${n<=s.rating?'f':''}"></i>`).join('')}</span>
+          <span class="shot-basket">${s.size==='double'?'Double':'Single'} · ${s.wall==='non'?'Non-pressurized':'Pressurized'}${s.notes?' · '+esc(s.notes):''}</span>
+        </button>
+        <button type="button" class="dial-btn" data-dial="${s.id}" data-bean="${b.id}" aria-pressed="${b.dialedShotId===s.id}">${b.dialedShotId===s.id?'Dialed-in':'Mark dialed'}</button>
+      </li>`}).join('')}</ol>
+    </div>
+    <div class="chart"><div class="lab" style="margin-bottom:8px">Rating vs. grind</div>${chartSVG(shots,b.dialedShotId)}<p class="sub" style="margin:8px 0 0">Dashed line averages rating at each setting. Copper marks the dialed-in shot.</p></div>
+  </section>`}).join('');
+  $$('[data-load]',host).forEach(b=>b.onclick=()=>loadShot(b.dataset.load,true));
+  $$('[data-dial]',host).forEach(btn=>btn.onclick=()=>{const bean=beanById(btn.dataset.bean);bean.dialedShotId=bean.dialedShotId===btn.dataset.dial?null:btn.dataset.dial;buzz(10);save(true);renderLog();renderCarousel();toast(bean.dialedShotId?'Marked as the dialed-in recipe':'Dialed-in mark removed')});
+}
+function loadShot(id,go){
+  const s=db.shots.find(x=>x.id===id);if(!s)return;
+  Object.assign(B,{beanId:s.beanId,size:s.size,wall:s.wall,dose:s.dose,retention:s.retention??.5,grind:s.grind,time:s.time,yield:s.yield,preinf:s.preinf!==false});
+  if(go)route('brew');applyBuilder(true);buzz([8,30,8]);toast(`Loaded shot from ${fmtDate(s.date)}`);
+}
+
+/* ---------------- beans ---------------- */
+function renderBeans(){
+  const host=$('#beans-body');
+  if(!db.beans.length){host.innerHTML='<p class="empty">No beans saved yet. Add your first coffee to start logging shots.</p>';return}
+  host.innerHTML=db.beans.map(b=>{const d=daysOff(b.roastDate),ss=db.shots.filter(s=>s.beanId===b.id),dl=ss.find(s=>s.id===b.dialedShotId),best=ss.length?Math.max(...ss.map(s=>s.rating)):null;
+    return`<article class="panel bean-card"><div class="row between" style="align-items:flex-start"><div style="min-width:0"><h2>${esc(b.name)}</h2><div class="roaster">${esc(b.roaster||'Unknown roaster')}</div></div>${dl?'<span class="badge">Dialed-in</span>':''}</div>
+      <div class="bean-days">${d??'—'}<small>days off roast</small></div><div class="sub">${restTxt(d)}${b.roastDate?' · roasted '+fmtDate(new Date(b.roastDate+'T12:00:00')):''}</div>
+      <div class="pill-meta" style="margin-top:12px"><span>${esc(b.roast)}</span><span>${esc(b.process)}</span><span>${ss.length} shot${ss.length===1?'':'s'}</span>${best?`<span>Best ${best}/5</span>`:''}</div>
+      ${dl?`<div class="recipe">Recipe: <b>grind ${fmtGrind(dl.grind)} · ${fx(dl.dose,1)} → ${fx(dl.yield,1)} g · ${fx(dl.time,0)} s</b></div>`:''}
+      <div class="card-actions"><button class="btn sm primary" type="button" data-brew="${b.id}">Brew with this</button><button class="btn sm" type="button" data-edit="${b.id}">Edit</button></div></article>`}).join('');
+  $$('[data-edit]',host).forEach(x=>x.onclick=()=>openBean(beanById(x.dataset.edit)));
+  $$('[data-brew]',host).forEach(x=>x.onclick=()=>{const b=beanById(x.dataset.brew);B.beanId=b.id;if(b.dialedShotId&&db.shots.some(s=>s.id===b.dialedShotId)){loadShot(b.dialedShotId,true)}else{route('brew');applyBuilder(true)}});
+}
+
+/* ---------------- settings ---------------- */
+function numField(k,label,v,step,min,max){return`<label class="field">${label}<input type="number" data-k="${k}" value="${v}" step="${step}" ${min!=null?`min="${min}"`:''} ${max!=null?`max="${max}"`:''} inputmode="decimal"></label>`}
+function renderPrefs(){
+  const s=S(),g=s.grinder,t=s.target;
+  const bk=[['double-non','Double · non-pressurized'],['double-pressurized','Double · pressurized'],['single-non','Single · non-pressurized'],['single-pressurized','Single · pressurized']];
+  const thumb=k=>s.photos[k]?`<img src="${esc(s.photos[k])}" alt="">`:(k==='grinder'?grinderSVG():machineSVG());
+  $('#prefs').innerHTML=`
+  <fieldset><legend class="lab">Units</legend><p class="desc">How yield is shown. Dial stores grams and converts using the density below.</p>
+    <div class="fgrid"><div class="field"><span id="l-punit">Yield unit</span><div id="p-unit"></div></div>${numField('density','Espresso density (g/ml)',s.density,.01,.8,1.2)}</div></fieldset>
+  <fieldset><legend class="lab">Grinder · Encore ESP</legend><p class="desc">The dial's numbered range. Settings up to the espresso limit are drawn as the espresso range with finer tick spacing.</p>
+    <div class="fgrid">${numField('grinder.min','Lowest setting',g.min,1,0,10)}${numField('grinder.max','Highest setting',g.max,1,10,60)}${numField('grinder.espMax','Espresso range ends at',g.espMax,1,2,59)}
+    <label class="field">Step size<select data-k="grinder.step"><option value="1"${g.step===1?' selected':''}>1 setting</option><option value="0.5"${g.step===.5?' selected':''}>Half setting</option></select></label>${numField('grinder.def','Default setting',g.def,g.step,g.min,g.max)}</div></fieldset>
+  <fieldset><legend class="lab">Basket presets · 54 mm</legend><p class="desc">Recommended dose range and the default dose set when you pick each basket.</p>
+    <div class="tbl-wrap"><table class="btable"><thead><tr><th>Basket</th><th>Min g</th><th>Max g</th><th>Default g</th></tr></thead><tbody>${bk.map(([k,l])=>`<tr><td>${l}</td>${['min','max','def'].map(f=>`<td><input type="number" step="0.5" min="7" max="22" data-k="baskets.${k}.${f}" value="${s.baskets[k][f]}" aria-label="${l} ${f==='def'?'default':f} dose"></td>`).join('')}</tr>`).join('')}</tbody></table></div></fieldset>
+  <fieldset><legend class="lab">Bambino buttons</legend><p class="desc">Weigh what your 1-cup and 2-cup buttons actually dispense and enter it here. The yield presets use these values.</p>
+    <div class="fgrid">${numField('cups.one','1-cup button (g)',s.cups.one,.5,15,60)}${numField('cups.two','2-cup button (g)',s.cups.two,.5,15,60)}</div></fieldset>
+  <fieldset><legend class="lab">Targets</legend><p class="desc">The shaded band on the timer, the ratio the shot gauge aims for, and how long the timer labels the pre-infusion phase.</p>
+    <div class="fgrid">${numField('target.tMin','Target time from (s)',t.tMin,1,15,60)}${numField('target.tMax','Target time to (s)',t.tMax,1,15,60)}${numField('target.ratio','Target ratio (1:x)',t.ratio,.1,1,4)}${numField('target.pi','Pre-infusion window (s)',t.pi,1,0,15)}</div></fieldset>
+  <fieldset><legend class="lab">Gear photos</legend><p class="desc">Replace the drawings with photos of your own grinder and machine. Front-on shots on a plain light background look best. Uploads are resized to 2000 px and stored in this browser. Image links only load when Dial runs outside Claude, so upload the file instead.</p>
+    ${['grinder','machine'].map(k=>`<div class="photo-row"><div class="thumb">${thumb(k)}</div><div class="stack" style="min-width:0"><b style="font-weight:500">${k==='grinder'?'Baratza Encore ESP':'Breville Bambino'}</b>
+      <div class="row"><span class="btn sm file-btn">Upload photo<input type="file" accept="image/*" data-photo="${k}" aria-label="Upload ${k} photo"></span>${s.photos[k]?`<button type="button" class="btn sm ghost" data-unphoto="${k}">Use drawing</button>`:''}</div>
+      <label class="field">Or image URL<input type="url" data-url="${k}" placeholder="https://…" value="${s.photos[k]&&!s.photos[k].startsWith('data:')?esc(s.photos[k]):''}"></label></div></div>`).join('')}</fieldset>
+  <fieldset><legend class="lab">Data</legend><p class="desc">Beans, shots and settings live only in this browser.</p><button type="button" class="btn" id="p-reset">Reset to sample data</button></fieldset>`;
+  Seg($('#p-unit'),[{v:'g',l:'Grams'},{v:'ml',l:'Millilitres'}],s.unit,v=>{s.unit=v;onUnit();save()},'Yield unit','small');
+  $('#prefs').onchange=e=>{const k=e.target.dataset.k;if(!k)return;let v=+e.target.value;if(!isFinite(v))return;
+    const path=k.split('.');let o=s;for(let i=0;i<path.length-1;i++)o=o[path[i]];o[path.at(-1)]=v;validate();save(true);afterSettings(path[0]);
+    if(path[0]==='grinder')renderPrefs()};
+  $$('[data-photo]').forEach(inp=>inp.onchange=()=>{const f=inp.files[0];if(!f)return;readPhoto(f).then(url=>{s.photos[inp.dataset.photo]=url;save(true);renderGear();renderPrefs();toast('Photo updated')}).catch(()=>toast('That file could not be read as an image.'))});
+  $$('[data-url]').forEach(inp=>inp.onchange=()=>{const v=inp.value.trim();if(v&&!/^https?:\/\//.test(v)){toast('Use a full https:// image link.');return}s.photos[inp.dataset.url]=v;save(true);renderGear();renderPrefs();if(v)toast('Photo link saved')});
+  $$('[data-unphoto]').forEach(b=>b.onclick=()=>{s.photos[b.dataset.unphoto]='';save(true);renderGear();renderPrefs()});
+  let armed=false;$('#p-reset').onclick=e=>{if(!armed){armed=true;e.target.textContent='Tap again to replace all data';return}db=sample();Object.assign(B,db.builder);db.builder=B;save(true);location.reload()};
+}
+function validate(){
+  const g=S().grinder;g.step=g.step===.5?.5:1;g.min=Math.round(clamp(g.min,0,10));g.max=Math.round(clamp(g.max,g.min+4,60));g.espMax=Math.round(clamp(g.espMax,g.min+1,g.max-1));g.def=clamp(snap(g.def,g.step),g.min,g.max);
+  for(const b of Object.values(S().baskets)){b.min=clamp(b.min,7,22);b.max=clamp(b.max,b.min,22);b.def=clamp(b.def,b.min,b.max)}
+  const t=S().target;t.tMin=clamp(t.tMin,15,59);t.tMax=clamp(t.tMax,t.tMin+1,60);t.ratio=clamp(t.ratio,1,4);t.pi=clamp(t.pi,0,15);
+  S().cups.one=clamp(S().cups.one,15,60);S().cups.two=clamp(S().cups.two,15,60);S().density=clamp(S().density||1,.8,1.2);
+}
+function afterSettings(sec){
+  if(sec==='grinder'){B.grind=clamp(snap(B.grind,S().grinder.step),S().grinder.min,S().grinder.max);dial.rebuild();dial.set(B.grind,false)}
+  if(sec==='target'){timer.build();picker.refresh()}
+  rDose.setBand(doseBand());rYield.setBand(yieldBand());rYield.redraw();presetLabels();update();
+}
+function readPhoto(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onerror=rej;fr.onload=()=>{const img=new Image();img.onerror=rej;img.onload=()=>{
+  const max=2000,s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);let u=c.toDataURL('image/webp',.9);if(!u.startsWith('data:image/webp'))u=c.toDataURL('image/jpeg',.9);res(u)};img.src=fr.result};fr.readAsDataURL(file)})}
+
+/* ---------------- navigation ---------------- */
+const VIEWS=['brew','log','beans','prefs'];
+function route(v){
+  if(!VIEWS.includes(v))v='brew';
+  VIEWS.forEach(x=>$('#view-'+x).hidden=x!==v);
+  $$('.tab').forEach(t=>t.dataset.nav===v?t.setAttribute('aria-current','page'):t.removeAttribute('aria-current'));
+  if(v==='log')renderLog();if(v==='beans')renderBeans();if(v==='prefs')renderPrefs();
+  if(v==='brew'){renderCarousel();requestAnimationFrame(()=>{dial.set(B.grind,false);onScroll()})}
+  window.scrollTo(0,0);try{history.replaceState(null,'','#'+v)}catch(e){}
+  drawLinks();
+}
+function refreshAll(){renderCarousel();update();const v=VIEWS.find(x=>!$('#view-'+x).hidden);if(v==='log')renderLog();if(v==='beans')renderBeans()}
+$$('[data-nav]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();buzz(6);route(b.dataset.nav)}));
+$('#bean-new').onclick=()=>openBean(null);
+
+/* ---------------- boot ---------------- */
+renderGear();
+initBrew();
+route(VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'brew');
+addEventListener('scroll',onScroll,{passive:true});
+addEventListener('resize',()=>{onScroll();drawLinks()});
+desk.addEventListener('change',()=>{const g=$('#gear-layer');g.style.transform='';g.style.opacity='';drawLinks()});
+new ResizeObserver(drawLinks).observe($('#brew-grid'));
+if(document.fonts)document.fonts.ready.then(()=>{rDose.redraw();rYield.redraw();drawLinks()});
+})();
+</script>
