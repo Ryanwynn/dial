@@ -51,6 +51,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .brand-mark{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);position:relative}
 .brand-mark::after{content:"";position:absolute;left:50%;top:2px;width:1.5px;height:7px;background:var(--accent);transform:translateX(-50%);border-radius:1px}
 .brand small{font-weight:400;color:var(--ink-3);font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}
+.sync{display:inline-flex;align-items:center;gap:7px;margin-left:20px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;cursor:default}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);transition:background .3s}
+.sync[data-state="synced"] i{background:#6E7F66}
+.sync[data-state="offline"] i{background:var(--accent)}
+.sync[data-state="connecting"] i{animation:glow 1.4s ease-in-out infinite}
+@media (max-width:1023.98px){.sync{margin-left:auto}}
 .tabs{display:flex;gap:4px}
 .tab{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink-2);transition:background .3s var(--ease),color .3s,transform .35s var(--spring)}
 .tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5}
@@ -405,6 +411,7 @@ input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
 
 <header class="topbar">
   <a class="brand" href="#brew" data-nav="brew"><span class="brand-mark" aria-hidden="true"></span>Dial<small>Espresso</small></a>
+  <span class="sync" id="sync" role="status" data-state="local"><i aria-hidden="true"></i><span>This device only</span></span>
 </header>
 <nav class="tabs" aria-label="Sections">
   <button class="tab" type="button" data-nav="brew"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c0 1.5 1.5 1.5 1.5 3M12 3.5c0 1.5 1.5 1.5 1.5 3"/></svg><span>Brew</span></button>
@@ -603,27 +610,12 @@ const DEF={
   target:{tMin:25,tMax:32,ratio:2.0,pi:6},
   photos:{grinder:'',machine:''}
 };
-function sample(){
-  const now=Date.now(), at=(d,h)=>now-d*DAY+(h-new Date(now).getHours())*36e5;
-  const beans=[
-    {id:'b1',name:'Guji Hambela',roaster:'Northbound Coffee',roast:'Light',process:'Washed',roastDate:isoDay(-13),dialedShotId:'s3'},
-    {id:'b2',name:'Huila Pink Bourbon',roaster:'Saltmarsh Roasting Co.',roast:'Medium-Light',process:'Honey',roastDate:isoDay(-9),dialedShotId:'s6'},
-    {id:'b3',name:'Fieldhouse Espresso',roaster:'Common Thread',roast:'Medium-Dark',process:'Natural',roastDate:isoDay(-20),dialedShotId:null}
-  ];
-  const S=(id,b,d,h,o)=>Object.assign({id,beanId:b,date:at(d,h),size:'double',wall:'non',dose:18,retention:.5,preinf:true},o);
-  const shots=[
-    S('s1','b1',8,7,{grind:12,time:22,yield:40.1,rating:2,taste:{sour:7,bitter:1,body:3,sweet:3},notes:'Sharp lemon, thin body. Ran fast.'}),
-    S('s2','b1',7,8,{grind:10,time:26,yield:38.4,rating:3,taste:{sour:5,bitter:2,body:4,sweet:5},notes:'Better. Still a touch bright.'}),
-    S('s3','b1',6,7,{grind:8,time:31,yield:39.0,rating:5,taste:{sour:3,bitter:2,body:7,sweet:8},notes:'Peach, jasmine, syrupy. This is it.'}),
-    S('s4','b1',5,9,{grind:6,time:38,yield:37.2,rating:3,taste:{sour:1,bitter:6,body:7,sweet:4},notes:'Choked a little. Drying finish.'}),
-    S('s5','b2',4,7,{grind:13,time:21,yield:36.8,rating:2,taste:{sour:6,bitter:1,body:3,sweet:4},notes:'Watery and tart.'}),
-    S('s6','b2',3,8,{grind:11,time:27,yield:37.5,rating:4,taste:{sour:3,bitter:2,body:6,sweet:7},notes:'Red apple and brown sugar.'}),
-    S('s7','b2',2,7,{grind:9,time:33,yield:36.2,rating:3,taste:{sour:2,bitter:5,body:6,sweet:5},notes:'Heavier, a bit muddy.'}),
-    S('s8','b3',1,8,{grind:14,time:24,wall:'pressurized',yield:34.0,rating:3,taste:{sour:3,bitter:4,body:5,sweet:4},notes:'Pressurized basket. Chocolatey but flat.'})
-  ];
-  return {v:1,settings:JSON.parse(JSON.stringify(DEF)),beans,shots,
-    builder:{size:'double',wall:'non',dose:18,beanId:'b1',grind:10,retention:.5,time:28,timeMode:'timer',preinf:true,yield:36}};
+function fresh(){
+  return {v:1,settings:JSON.parse(JSON.stringify(DEF)),beans:[],shots:[],pend:{beans:[],shots:[],gone:[]},builderAt:0,
+    builder:{size:'double',wall:'non',dose:18,beanId:null,grind:10,retention:.5,time:28,timeMode:'timer',preinf:true,yield:36}};
 }
+// Ids of the example beans and shots earlier versions shipped with; stripped from saved data on load.
+const SAMPLE_BEANS=['b1','b2','b3'],SAMPLE_SHOTS=['s1','s2','s3','s4','s5','s6','s7','s8'];
 function merge(d,v){
   if(d&&typeof d==='object'&&!Array.isArray(d)){const o={};const src=(v&&typeof v==='object')?v:{};for(const k of new Set([...Object.keys(d),...Object.keys(src)]))o[k]=k in d?merge(d[k],src[k]):src[k];return o}
   return v===undefined||v===null||(typeof d==='number'&&!isFinite(+v))?d:(typeof d==='number'?+v:v);
@@ -631,13 +623,125 @@ function merge(d,v){
 const KEY='dial.v1';
 let db;
 try{const raw=JSON.parse(localStorage.getItem(KEY));if(raw&&raw.v===1)db=raw}catch(e){}
-if(!db)db=sample();
+if(!db)db=fresh();
 db.settings=merge(DEF,db.settings);
 db.beans=db.beans||[];db.shots=db.shots||[];
-const B=db.builder=Object.assign(sample().builder,db.builder||{});
+db.pend=Object.assign({beans:[],shots:[],gone:[]},db.pend);
+db.shots=db.shots.filter(s=>!SAMPLE_SHOTS.includes(s.id));
+db.beans=db.beans.filter(b=>!SAMPLE_BEANS.includes(b.id)||db.shots.some(s=>s.beanId===b.id));
+db.beans.forEach(b=>{if(b.dialedShotId&&!db.shots.some(s=>s.id===b.dialedShotId))b.dialedShotId=null});
+const B=db.builder=Object.assign(fresh().builder,db.builder||{});
 const S=()=>db.settings;
-let saveT;
-function save(now){clearTimeout(saveT);const w=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Could not save: browser storage is full or blocked.')}};now?w():saveT=setTimeout(w,250)}
+const byCreated=(a,b)=>(a.created||0)-(b.created||0)||String(a.name).localeCompare(String(b.name));
+function fixBuilderBean(){if(!db.beans.some(b=>b.id===B.beanId))B.beanId=db.beans[0]?.id||null}
+fixBuilderBean();
+let saveT,lastLocalBuilder=JSON.stringify(B);
+function save(now){
+  const bj=JSON.stringify(B);if(bj!==lastLocalBuilder){lastLocalBuilder=bj;db.builderAt=Date.now()}
+  clearTimeout(saveT);const w=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Could not save: browser storage is full or blocked.')}};now?w():saveT=setTimeout(w,250);
+  queueSync();
+}
+
+/* ---------------- account sync ----------------
+   Each signed-in person's beans, shots and settings live in their own private
+   data/users/<id>/ space in the artifact's database, so the same account sees the
+   same log on every device and nobody else who opens the link can read it.
+   localStorage stays as the offline cache; ids not yet confirmed by the store are
+   kept in db.pend and pushed again on the next connection. Gear photos stay local. */
+const R={ready:false,lib:null,sRef:null,bRef:null};
+const last={settings:'',builder:''},chains={};
+const clean=o=>JSON.parse(JSON.stringify(o));
+const addP=(a,id)=>{if(!a.includes(id))a.push(id)},rmP=(a,id)=>{const i=a.indexOf(id);if(i>=0)a.splice(i,1)};
+const remoteSettings=()=>{const s=clean(S());delete s.photos;return s};
+const SYNC={
+  connecting:['Connecting','Connecting to your Claude account.'],
+  synced:['Synced','Beans, shots and settings are saved to your Claude account, so every device you sign in on shows the same log. Nobody else who opens the link can see them.'],
+  local:['This device only','Sync needs you signed in to Claude with access to use Dial. Until then, everything is saved in this browser only.'],
+  offline:['Sync paused','Your Claude account can’t be reached right now. Changes are saved on this device and sync when the connection is back.']
+};
+function setSync(state){
+  const el=$('#sync'),m=SYNC[state];el.dataset.state=state;$('span',el).textContent=m[0];el.title=m[1];el.setAttribute('aria-label','Sync: '+m[1]);
+  const d=$('#sync-detail');if(d)d.textContent=m[1];
+}
+function rq(path,fn,ok){
+  chains[path]=(chains[path]||Promise.resolve()).then(fn).then(()=>ok&&ok()).catch(e=>{
+    const c=e&&e.code;
+    if(c==='quota_exceeded')toast('Sync storage is full. Delete some old shots to keep syncing.');
+    else if(c==='invalid_argument'||c==='revoked'||c==='not_granted'){R.ready=false;setSync('local')}
+    else setSync('offline');
+  });
+}
+function putBean(b){addP(db.pend.beans,b.id);rmP(db.pend.gone,'b/'+b.id);save(true);if(R.ready)rq('b/'+b.id,()=>R.lib.collection('beans').doc(b.id).set(clean(b)),()=>{rmP(db.pend.beans,b.id);save()})}
+function delBean(id){rmP(db.pend.beans,id);addP(db.pend.gone,'b/'+id);save(true);if(R.ready)rq('b/'+id,()=>R.lib.collection('beans').doc(id).delete(),()=>{rmP(db.pend.gone,'b/'+id);save()})}
+function putShot(s){addP(db.pend.shots,s.id);rmP(db.pend.gone,'s/'+s.id);save(true);if(R.ready)rq('s/'+s.id,()=>R.lib.collection('shots').doc(s.id).set(clean(s)),()=>{rmP(db.pend.shots,s.id);save()})}
+function delShot(id){rmP(db.pend.shots,id);addP(db.pend.gone,'s/'+id);save(true);if(R.ready)rq('s/'+id,()=>R.lib.collection('shots').doc(id).delete(),()=>{rmP(db.pend.gone,'s/'+id);save()})}
+let syncT;
+function queueSync(){
+  if(!R.ready)return;clearTimeout(syncT);
+  syncT=setTimeout(()=>{
+    const s=JSON.stringify(remoteSettings());if(s!==last.settings){last.settings=s;const body=JSON.parse(s);rq('settings',()=>R.sRef.set({settings:body}))}
+    const b=JSON.stringify(B);if(b!==last.builder){last.builder=b;const body=JSON.parse(b),at=db.builderAt||Date.now();rq('builder',()=>R.bRef.set({builder:body,at}))}
+  },1200);
+}
+async function pushPending(){
+  for(const id of [...db.pend.beans]){const b=db.beans.find(x=>x.id===id);if(b)await R.lib.collection('beans').doc(id).set(clean(b));rmP(db.pend.beans,id)}
+  for(const id of [...db.pend.shots]){const s=db.shots.find(x=>x.id===id);if(s)await R.lib.collection('shots').doc(id).set(clean(s));rmP(db.pend.shots,id)}
+  for(const g of [...db.pend.gone]){const[t,id]=g.split('/');await R.lib.collection(t==='b'?'beans':'shots').doc(id).delete();rmP(db.pend.gone,g)}
+}
+function mergeRemote(remote,local,pend,kind){
+  const ids=new Set(remote.map(x=>x.id));
+  const out=remote.filter(x=>!db.pend.gone.includes(kind+'/'+x.id));
+  for(const x of local)if(pend.includes(x.id)&&!ids.has(x.id))out.push(x);
+  return out;
+}
+async function connect(){
+  if(!window.claude||typeof window.claude.use!=='function'){setSync('local');return}
+  setSync('connecting');
+  let cdb=null,user=null;try{[cdb,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')])}catch(e){}
+  const id=user?await user.id():null;
+  if(!cdb||!id){setSync('local');return}
+  const base='data/users/'+id;
+  R.lib=cdb.doc(base+'/library');R.sRef=cdb.doc(base+'/settings');R.bRef=cdb.doc(base+'/builder');
+  try{
+    const[sSnap,bSnap]=await Promise.all([R.sRef.get(),R.bRef.get()]);
+    if(!sSnap.exists){
+      // First synced visit for this account: move what this device has into it.
+      db.pend.beans=db.beans.map(b=>b.id);db.pend.shots=db.shots.map(s=>s.id);db.pend.gone=[];
+      await pushPending();
+      await R.bRef.set({builder:clean(B),at:db.builderAt||Date.now()});
+      await R.sRef.set({settings:remoteSettings()});
+    }else{
+      const rs=sSnap.data().settings;if(rs)db.settings=merge(DEF,{...rs,photos:S().photos});
+      const rb=bSnap.exists?bSnap.data():null;
+      if(rb&&rb.builder&&(rb.at||0)>(db.builderAt||0)){Object.assign(B,rb.builder);db.builderAt=rb.at;lastLocalBuilder=JSON.stringify(B)}
+      await pushPending();
+    }
+  }catch(e){setSync(e&&e.code==='unavailable'?'offline':'local');return}
+  R.ready=true;last.settings=JSON.stringify(remoteSettings());last.builder=JSON.stringify(B);
+  applySettingsUI();applyBuilder(false);save(true);
+  let live=false;const tm=setTimeout(()=>{if(!live)setSync('offline')},10000);
+  const onErr=e=>{clearTimeout(tm);R.ready=false;setSync(e&&e.code==='revoked'?'local':'offline')};
+  const seen=snap=>{if(!snap.metadata.fromCache){live=true;clearTimeout(tm);setSync('synced')}};
+  R.lib.collection('beans').onSnapshot(snap=>{
+    if(snap.metadata.fromCache&&snap.empty)return;seen(snap);
+    db.beans=mergeRemote(snap.docs.map(d=>({...d.data(),id:d.id})),db.beans,db.pend.beans,'b').sort(byCreated);
+    fixBuilderBean();save();refreshAll();
+  },onErr);
+  R.lib.collection('shots').onSnapshot(snap=>{
+    if(snap.metadata.fromCache&&snap.empty)return;seen(snap);
+    db.shots=mergeRemote(snap.docs.map(d=>({...d.data(),id:d.id})),db.shots,db.pend.shots,'s');
+    save();refreshAll();
+  },onErr);
+  R.sRef.onSnapshot(snap=>{
+    seen(snap);if(!snap.exists)return;const rs=snap.data().settings;if(!rs)return;
+    const js=JSON.stringify(rs);if(js===last.settings)return;last.settings=js;
+    db.settings=merge(DEF,{...rs,photos:S().photos});applySettingsUI();save();
+  },onErr);
+}
+function applySettingsUI(){
+  validate();afterSettings('grinder');afterSettings('target');onUnit();
+  if(!$('#view-prefs').hidden&&!$('#prefs').contains(document.activeElement))renderPrefs();
+}
 const beanById=id=>db.beans.find(b=>b.id===id);
 const basketKey=()=>B.size+'-'+B.wall;
 const basketCfg=()=>S().baskets[basketKey()]||DEF.baskets[basketKey()];
@@ -1018,7 +1122,7 @@ function renderCarousel(){
   $('#bean-add').onclick=()=>openBean(null);
   const sel=$('.bean-chip[aria-pressed="true"]',car);if(sel)car.scrollTo({left:sel.offsetLeft-car.offsetLeft-2,behavior:'auto'});
   const b=beanById(B.beanId),m=$('#bean-meta');
-  if(!b){m.innerHTML='<p class="sub" style="margin:0">No coffee selected.</p>';$('#bean-edit').hidden=true;return}
+  if(!b){m.innerHTML=`<p class="sub" style="margin:0">${db.beans.length?'Pick a coffee above.':'Add your first coffee to start logging shots. Your shot log and charts fill in as you taste and save.'}</p>`;$('#bean-edit').hidden=true;return}
   $('#bean-edit').hidden=false;
   const d=daysOff(b.roastDate),ds=db.shots.filter(s=>s.beanId===b.id),dial=ds.find(s=>s.id===b.dialedShotId);
   m.innerHTML=`<div class="row between" style="align-items:flex-end"><div><div style="font-size:30px;font-weight:300;letter-spacing:-.03em;line-height:1" class="num">${d??'—'}<span class="sub" style="font-size:13px;margin-left:6px;letter-spacing:0">days off roast</span></div><div class="sub" style="margin-top:4px">${restTxt(d)}</div></div>${dial?'<span class="badge">Dialed-in</span>':''}</div>
@@ -1084,7 +1188,7 @@ $('#sheet').addEventListener('click',e=>{if(e.target.matches('[data-close]'))clo
 const ROASTS=['Light','Medium-Light','Medium','Medium-Dark','Dark'],ROAST_L={'Medium-Light':'Med-Light','Medium-Dark':'Med-Dark'};
 const PROCS=['Washed','Natural','Honey','Other'];
 function openBean(bean){
-  const isNew=!bean;bean=bean||{id:uid(),name:'',roaster:'',roast:'Medium-Light',process:'Washed',roastDate:isoDay(-7),dialedShotId:null};
+  const isNew=!bean;bean=bean||{id:uid(),created:Date.now(),name:'',roaster:'',roast:'Medium-Light',process:'Washed',roastDate:isoDay(-7),dialedShotId:null};
   let roast=bean.roast,proc=bean.process,armed=false;
   openSheet(`<h2 id="sheet-title">${isNew?'New bean':'Edit bean'}</h2><p class="lede">Saved beans appear in the Coffee card on the Brew screen.</p>
   <form id="bean-form">
@@ -1099,10 +1203,11 @@ function openBean(bean){
   $$('[data-p]').forEach(b=>b.onclick=()=>{proc=b.dataset.p;buzz(6);$$('[data-p]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
   const days=()=>$('#f-days').textContent=daysTxt(daysOff($('#f-date').value));days();$('#f-date').oninput=days;
   const del=$('#f-del');if(del)del.onclick=()=>{if(!armed){armed=true;del.textContent='Tap again to delete';del.style.color='var(--accent)';return}
+    db.shots.filter(s=>s.beanId===bean.id).forEach(s=>delShot(s.id));delBean(bean.id);
     db.beans=db.beans.filter(b=>b.id!==bean.id);db.shots=db.shots.filter(s=>s.beanId!==bean.id);if(B.beanId===bean.id)B.beanId=db.beans[0]?.id||null;save(true);closeSheet();refreshAll();toast('Bean and its shots deleted')};
   $('#bean-form').onsubmit=e=>{e.preventDefault();const name=$('#f-name').value.trim();if(!name){$('#f-name').focus();toast('Give the bean a name to save it.');return}
     Object.assign(bean,{name,roaster:$('#f-roaster').value.trim(),roast,process:proc,roastDate:$('#f-date').value});
-    if(isNew){db.beans.push(bean);B.beanId=bean.id}save(true);closeSheet();refreshAll();buzz(12);toast(isNew?'Bean saved':'Changes saved')};
+    if(isNew){db.beans.push(bean);B.beanId=bean.id}putBean(bean);closeSheet();refreshAll();buzz(12);toast(isNew?'Bean saved':'Changes saved')};
 }
 
 function openTaste(){
@@ -1121,8 +1226,8 @@ function openTaste(){
   const rb=$$('[data-r]');const setR=n=>{rating=n;rb.forEach(x=>{const on=+x.dataset.r===n;x.setAttribute('aria-checked',on);x.tabIndex=on||(!n&&x.dataset.r==='1')?0:-1})};setR(0);
   rb.forEach((x,i)=>{x.onclick=()=>{setR(+x.dataset.r);buzz(8)};x.onkeydown=e=>{let j=null;if(e.key==='ArrowRight'||e.key==='ArrowUp')j=Math.min(4,i+1);if(e.key==='ArrowLeft'||e.key==='ArrowDown')j=Math.max(0,i-1);if(j!==null){e.preventDefault();rb[j].focus();setR(j+1)}}});
   $('#taste-form').onsubmit=e=>{e.preventDefault();if(!rating){toast('Pick an overall rating from 1 to 5.');rb[0].focus();return}
-    db.shots.push({id:uid(),beanId:b.id,date:Date.now(),size:B.size,wall:B.wall,dose:B.dose,retention:B.retention,grind:B.grind,time:B.time,yield:B.yield,preinf:B.preinf,taste:{...t},rating,notes:$('#t-notes').value.trim()});
-    save(true);closeSheet();buzz([10,30,10]);renderCarousel();toast('Shot saved to the log')};
+    const shot={id:uid(),beanId:b.id,date:Date.now(),size:B.size,wall:B.wall,dose:B.dose,retention:B.retention,grind:B.grind,time:B.time,yield:B.yield,preinf:B.preinf,taste:{...t},rating,notes:$('#t-notes').value.trim()};
+    db.shots.push(shot);putShot(shot);closeSheet();buzz([10,30,10]);renderCarousel();toast('Shot saved to the log')};
 }
 
 /* ---------------- log ---------------- */
@@ -1161,7 +1266,7 @@ function renderLog(){
     <div class="chart"><div class="lab" style="margin-bottom:8px">Rating vs. grind</div>${chartSVG(shots,b.dialedShotId)}<p class="sub" style="margin:8px 0 0">Dashed line averages rating at each setting. Copper marks the dialed-in shot.</p></div>
   </section>`}).join('');
   $$('[data-load]',host).forEach(b=>b.onclick=()=>loadShot(b.dataset.load,true));
-  $$('[data-dial]',host).forEach(btn=>btn.onclick=()=>{const bean=beanById(btn.dataset.bean);bean.dialedShotId=bean.dialedShotId===btn.dataset.dial?null:btn.dataset.dial;buzz(10);save(true);renderLog();renderCarousel();toast(bean.dialedShotId?'Marked as the dialed-in recipe':'Dialed-in mark removed')});
+  $$('[data-dial]',host).forEach(btn=>btn.onclick=()=>{const bean=beanById(btn.dataset.bean);bean.dialedShotId=bean.dialedShotId===btn.dataset.dial?null:btn.dataset.dial;buzz(10);putBean(bean);renderLog();renderCarousel();toast(bean.dialedShotId?'Marked as the dialed-in recipe':'Dialed-in mark removed')});
 }
 function loadShot(id,go){
   const s=db.shots.find(x=>x.id===id);if(!s)return;
@@ -1205,7 +1310,7 @@ function renderPrefs(){
     ${['grinder','machine'].map(k=>`<div class="photo-row"><div class="thumb">${thumb(k)}</div><div class="stack" style="min-width:0"><b style="font-weight:500">${k==='grinder'?'Baratza Encore ESP':'Breville Bambino'}</b>
       <div class="row"><span class="btn sm file-btn">Upload photo<input type="file" accept="image/*" data-photo="${k}" aria-label="Upload ${k} photo"></span>${s.photos[k]?`<button type="button" class="btn sm ghost" data-unphoto="${k}">Use drawing</button>`:''}</div>
       <label class="field">Or image URL<input type="url" data-url="${k}" placeholder="https://…" value="${s.photos[k]&&!s.photos[k].startsWith('data:')?esc(s.photos[k]):''}"></label></div></div>`).join('')}</fieldset>
-  <fieldset><legend class="lab">Data</legend><p class="desc">Beans, shots and settings live only in this browser.</p><button type="button" class="btn" id="p-reset">Reset to sample data</button></fieldset>`;
+  <fieldset><legend class="lab">Sync &amp; data</legend><p class="desc" id="sync-detail">${esc(SYNC[$('#sync').dataset.state||'local'][1])}</p><p class="desc">Gear photos stay on the device you uploaded them from.</p><button type="button" class="btn" id="p-reset">Delete all beans and shots</button></fieldset>`;
   Seg($('#p-unit'),[{v:'g',l:'Grams'},{v:'ml',l:'Millilitres'}],s.unit,v=>{s.unit=v;onUnit();save()},'Yield unit','small');
   $('#prefs').onchange=e=>{const k=e.target.dataset.k;if(!k)return;let v=+e.target.value;if(!isFinite(v))return;
     const path=k.split('.');let o=s;for(let i=0;i<path.length-1;i++)o=o[path[i]];o[path.at(-1)]=v;validate();save(true);afterSettings(path[0]);
@@ -1213,7 +1318,8 @@ function renderPrefs(){
   $$('[data-photo]').forEach(inp=>inp.onchange=()=>{const f=inp.files[0];if(!f)return;readPhoto(f).then(url=>{s.photos[inp.dataset.photo]=url;save(true);renderGear();renderPrefs();toast('Photo updated')}).catch(()=>toast('That file could not be read as an image.'))});
   $$('[data-url]').forEach(inp=>inp.onchange=()=>{const v=inp.value.trim();if(v&&!/^https?:\/\//.test(v)){toast('Use a full https:// image link.');return}s.photos[inp.dataset.url]=v;save(true);renderGear();renderPrefs();if(v)toast('Photo link saved')});
   $$('[data-unphoto]').forEach(b=>b.onclick=()=>{s.photos[b.dataset.unphoto]='';save(true);renderGear();renderPrefs()});
-  let armed=false;$('#p-reset').onclick=e=>{if(!armed){armed=true;e.target.textContent='Tap again to replace all data';return}db=sample();Object.assign(B,db.builder);db.builder=B;save(true);location.reload()};
+  let armed=false;$('#p-reset').onclick=e=>{if(!armed){armed=true;e.target.textContent=`Tap again to delete ${db.beans.length} beans and ${db.shots.length} shots`;return}
+    db.shots.forEach(s=>delShot(s.id));db.beans.forEach(b=>delBean(b.id));db.shots=[];db.beans=[];B.beanId=null;save(true);refreshAll();renderPrefs();toast('All beans and shots deleted')};
 }
 function validate(){
   const g=S().grinder;g.step=g.step===.5?.5:1;g.min=Math.round(clamp(g.min,0,10));g.max=Math.round(clamp(g.max,g.min+4,60));g.espMax=Math.round(clamp(g.espMax,g.min+1,g.max-1));g.def=clamp(snap(g.def,g.step),g.min,g.max);
@@ -1254,5 +1360,7 @@ addEventListener('resize',()=>{onScroll();drawLinks()});
 desk.addEventListener('change',()=>{const g=$('#gear-layer');g.style.transform='';g.style.opacity='';drawLinks()});
 new ResizeObserver(drawLinks).observe($('#brew-grid'));
 if(document.fonts)document.fonts.ready.then(()=>{rDose.redraw();rYield.redraw();drawLinks()});
+save(true);
+connect();
 })();
 </script>
